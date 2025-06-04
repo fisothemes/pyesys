@@ -1,6 +1,10 @@
 # Python Event System (PyESys)
 
-[![Python version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/) [![Build Status](https://img.shields.io/github/actions/workflow/status/fisothemes/pyesys/ci.yml?branch=master)](https://github.com/fisothemes/pyesys/actions) [![Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![Python version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/pyesys.svg)](https://pypi.org/project/pyesys/)
+[![Downloads](https://img.shields.io/pypi/dm/pyesys.svg)](https://pypi.org/project/pyesys/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/fisothemes/pyesys/ci.yml)](https://github.com/fisothemes/pyesys/actions)
+[![License](https://img.shields.io/pypi/l/pyesys.svg)](https://github.com/fisothemes/pyesys/blob/master/LICENSE)
 
 **A thread-safe, type-safe Python Event SYStem with async support.**
 
