@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - master
+      - develop
+    paths:
+      - "src/**"
   pull_request:
     branches:
       - master
       - develop
-
 jobs:
   test:
     runs-on: ubuntu-latest
