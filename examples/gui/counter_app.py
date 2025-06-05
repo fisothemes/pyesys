@@ -77,15 +77,15 @@ class CounterPresenter:
         # Subscribe model and view update handlers to view events
         # The order guarantees the model updates before the view refreshes.
         self.__view.on_increment_pressed += self.__model.increment   # Update model
-        self.__view.on_increment_pressed += self.__handle_change     # Refresh view
+        self.__view.on_increment_pressed += self.update     # Refresh view
 
         self.__view.on_decrement_pressed += self.__model.decrement   # Update model
-        self.__view.on_decrement_pressed += self.__handle_change     # Refresh view
+        self.__view.on_decrement_pressed += self.update     # Refresh view
 
         # Ensure view displays correct initial state
-        self.__handle_change()
+        self.update()
 
-    def __handle_change(self):
+    def update(self):
         """Synchronize the view with the current model state."""
         self.__view.update(self.__model.count)
 
