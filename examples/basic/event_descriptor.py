@@ -1,19 +1,15 @@
 from pyesys import event
 
 @event
-def on_click() -> None: ...
+def on_hello(name: str) -> None: ...
 
-@on_click.emitter
-def click() -> None:
-    print("Beginning click...")
+@on_hello.emitter
+def hello(name: str) -> None:
+    print(f"Saying hello to {name}...")
 
-def open_window() -> None:
-    print("Opening window...")
+def handler(name: str) -> None:
+    print(f"Received hello event for {name}.")
 
-def loading_file() -> None:
-    print("Loading file...")
+on_hello += handler
 
-on_click += open_window
-on_click += loading_file
-
-click()
+hello("World")
