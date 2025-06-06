@@ -255,9 +255,9 @@ class Event:
         """
         if isinstance(handler, (list, tuple, set)):
             for h in handler:
-                self._subscribe_one(h)
+                self.subscribe_one(h)
         else:
-            self._subscribe_one(handler)
+            self.subscribe_one(handler)
         return self
 
     def __isub__(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> "Event":
@@ -274,9 +274,9 @@ class Event:
         """
         if isinstance(handler, (list, tuple, set)):
             for h in handler:
-                self._unsubscribe_one(h)
+                self.unsubscribe_one(h)
         else:
-            self._unsubscribe_one(handler)
+            self.unsubscribe_one(handler)
         return self
 
     def emit(self, *args: P.args, **kwargs: P.kwargs) -> None:
