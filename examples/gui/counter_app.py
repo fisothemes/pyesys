@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from pyesys import create_event
 
 
@@ -30,29 +31,29 @@ class CounterView:
         # Window setup
         self.root = root
         self.root.title("PyESys Counter")
-        self.root.geometry("300x140")
+        self.root.geometry("260x120")
 
         # Display label for the counter value
-        self.__label = tk.Label(self.root, text="Count: 0", font=("Arial", 24))
+        self.__label = ttk.Label(self.root, text="Count: 0", font=("Arial", 24))
         self.__label.pack(pady=20)
 
         # Button frame for clean button alignment
-        button_frame = tk.Frame(self.root)
+        button_frame = ttk.Frame(self.root)
         button_frame.pack()
 
         # --- Events: Use PyESys create_event for type-safe, thread-safe event handling
 
         # Increment event and its listener interface
         self.__increment_event, self.on_increment_pressed = create_event(example=lambda: None)
-        self.__increment_button = tk.Button(
-            button_frame, text="Increment", font=("Arial", 16), command=self.__increment_event.emit
+        self.__increment_button = ttk.Button(
+            button_frame, text="Increment", command=self.__increment_event.emit
         )
         self.__increment_button.pack(side=tk.LEFT, padx=5)
 
         # Decrement event and its listener interface
         self.__decrement_event, self.on_decrement_pressed = create_event(example=lambda: None)
-        self.__decrement_button = tk.Button(
-            button_frame, text="Decrement", font=("Arial", 16), command=self.__decrement_event.emit
+        self.__decrement_button = ttk.Button(
+            button_frame, text="Decrement", command=self.__decrement_event.emit
         )
         self.__decrement_button.pack(side=tk.RIGHT, padx=5)
 
