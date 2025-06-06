@@ -109,6 +109,83 @@ def test_allow_duplicates_true_allows_multiple_subscriptions():
     assert calls == [2, 2]
 
 
+def test_bulk_subscription_with_list():
+    from pyesys.event import create_event
+    results = []
+    evt, listener = create_event(example=lambda x: None)
+
+    def h1(x): results.append(f"h1:{x}")
+    def h2(x): results.append(f"h2:{x}")
+
+    listener += [h1, h2]
+    evt.emit("ok")
+    assert results == ["h1:ok", "h2:ok"]
+
+def test_bulk_subscription_with_tuple():
+    from pyesys.event import create_event
+    results = []
+    evt, listener = create_event(example=lambda x: None)
+
+    def h1(x): results.append(f"h1:{x}")
+    def h2(x): results.append(f"h2:{x}")
+
+    listener += (h1, h2)
+    evt.emit("ok")
+    assert results == ["h1:ok", "h2:ok"]
+
+def test_bulk_subscription_with_set():
+    from pyesys.event import create_event
+    results = []
+    evt, listener = create_event(example=lambda x: None)
+
+    def h1(x): results.append(f"h1:{x}")
+    def h2(x): results.append(f"h2:{x}")
+
+    listener += {h1, h2}
+    evt.emit("ok")
+
+    assert set(results) == {"h1:ok", "h2:ok"}
+
+def test_bulk_unsubscription_with_list():
+    from pyesys.event import create_event
+    results = []
+    evt, listener = create_event(example=lambda x: None)
+
+    def h1(x): results.append(f"h1:{x}")
+    def h2(x): results.append(f"h2:{x}")
+
+    listener += [h1, h2]
+    listener -= [h1, h2]
+    evt.emit("gone")
+    assert results == []
+
+def test_bulk_unsubscription_with_tuple():
+    from pyesys.event import create_event
+    results = []
+    evt, listener = create_event(example=lambda x: None)
+
+    def h1(x): results.append(f"h1:{x}")
+    def h2(x): results.append(f"h2:{x}")
+
+    listener += (h1, h2)
+    listener -= (h1, h2)
+    evt.emit("gone")
+    assert results == []
+
+def test_bulk_unsubscription_with_set():
+    from pyesys.event import create_event
+    results = []
+    evt, listener = create_event(example=lambda x: None)
+
+    def h1(x): results.append(f"h1:{x}")
+    def h2(x): results.append(f"h2:{x}")
+
+    listener += {h1, h2}
+    listener -= {h1, h2}
+    evt.emit("gone")
+    assert results == []
+
+
 # -------------- Signature Mismatch --------------
 
 def test_signature_mismatch_raises_on_subscribe():
