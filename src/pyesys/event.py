@@ -57,11 +57,13 @@ class Event:
             self._outer += handler
             return self
 
-        def __isub__(self, handler: Callable[P, None]) -> "Event.Listener":
+        def __isub__(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> "Event.Listener":
             """
-            Unsubscribe a handler from the Event.
+            Unsubscribe one or more handlers from the Event.
 
-            :param handler: Callable to remove (removes first matching subscription).
+            Supports single callables or iterables (list, tuple, set).
+
+            :param handler: Callable or iterable of callables to unsubscribe.
             :return: Self for chaining.
             :raises TypeError: If handler is not callable.
             """
@@ -77,11 +79,13 @@ class Event:
             """
             self._outer += handler
 
-        def unsubscribe(self, handler: Callable[P, None]) -> None:
+        def unsubscribe(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> None:
             """
             Alternative to -= operator for unsubscribing handlers.
 
-            :param handler: Callable to unsubscribe.
+            Supports single callables or iterables (list, tuple, set).
+
+            :param handler: Callable or iterable of callables to unsubscribe.
             :raises TypeError: If handler is not callable.
             """
             self._outer -= handler
@@ -254,26 +258,23 @@ class Event:
             self._subscribe_one(handler)
         return self
 
-    def __isub__(self, handler: Callable[P, None]) -> "Event":
+    def __isub__(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> "Event":
         """
-        Unsubscribe a handler from this Event.
+        Unsubscribe one or more handlers from this Event.
+
+        Supports single callables or iterables (list, tuple, set).
 
         If duplicates exist, only the first matching handler is removed.
 
-        :param handler: Callable previously subscribed.
+        :param handler: Callable or iterable of callables to unsubscribe.
         :return: Self for chaining.
         :raises TypeError: If handler is not callable.
         """
-        if not callable(handler):
-            raise TypeError(f"Handler must be callable, got {type(handler)}")
-
-        h = handler if isinstance(handler, EventHandler) else EventHandler(handler)
-        with self._lock:
-            try:
-                self._handlers.remove(h)
-            except ValueError:
-                pass  # Handler not found, ignore silently
-
+        if isinstance(handler, (list, tuple, set)):
+            for h in handler:
+                self._unsubscribe_one(h)
+        else:
+            self._unsubscribe_one(handler)
         return self
 
     def emit(self, *args: P.args, **kwargs: P.kwargs) -> None:
