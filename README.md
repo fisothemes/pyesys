@@ -103,12 +103,17 @@ event_obj, listener = Event.new(example=example_sig)
 
 # Equivalent direct instantiation:
 msg_event = Event(example=example_sig)
-# Subscribe a handler:
+
+# Create a handler:
 def on_message(a: int, b: str) -> None:
     print(f"Got {a} and {b}")
-msg_event.Listener += on_message
+
+# Subscribe a handler:
+msg_event.listener += on_message
+
 # Emit:
 msg_event.emit(1, "hello")
+# prints: Got 1 and hello
 ```
 
 Here, `msg_event.Listener` is used to manage subscriptions, and `msg_event.emit(...)` dispatches to all subscribed handlers.
