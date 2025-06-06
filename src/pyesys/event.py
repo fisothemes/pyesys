@@ -215,6 +215,23 @@ class Event:
         with self._lock:
             self._handlers.append(h)
 
+    def unsubscribe_one(self, handler: Callable[P, None]) -> None:
+        """
+        Unsubscribe a single handler from this Event.
+
+        :param handler: Callable previously subscribed.
+        :raises TypeError: If handler is not callable.
+        """
+        if not callable(handler):
+            raise TypeError(f"Handler must be callable, got {type(handler)}")
+        
+        h = handler if isinstance(handler, EventHandler) else EventHandler(handler)
+        with self._lock:
+            try:
+                self._handlers.remove(h)
+            except ValueError:
+                pass # Handler not found, ignore silently
+
     def __iadd__(self, handler: Callable[P, None]) -> "Event":
         """
         Subscribe a handler to this Event with validation and duplicate control.
