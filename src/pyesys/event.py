@@ -200,6 +200,21 @@ class Event:
             except (ValueError, TypeError) as e:
                 raise TypeError(f"Cannot inspect handler signature: {e}")
 
+    def subscribe_one(self, handler: Callable[P, None]) -> None:
+        """ 
+        Subscribe a single handler to this Event with validation and duplicate control.
+
+        Performs runtime signature checking if an example was provided.
+
+        :param handler: Callable to subscribe.
+        :raises TypeError: If handler is invalid or incompatible.
+        """
+        self._validate_handler(handler)
+
+        h = handler if isinstance(handler, EventHandler) else EventHandler(handler)
+        with self._lock:
+            self._handlers.append(h)
+
     def __iadd__(self, handler: Callable[P, None]) -> "Event":
         """
         Subscribe a handler to this Event with validation and duplicate control.
