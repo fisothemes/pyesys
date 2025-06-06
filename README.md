@@ -29,6 +29,7 @@ PyESys provides a lightweight, dependency-free event/pub-sub framework. It suppo
    * [Creating an Event Directly with `Event.new` or `Event`](#creating-an-event-directly-with-eventnew-or-event)
    * [Subscribing & Emitting (Sync)](#subscribing--emitting-sync)
    * [Subscribing & Emitting (Async)](#subscribing--emitting-async)
+   * [Subscribing Multiple Handlers at Once](#subscribing-multiple-handlers-at-once)
    * [Class-Level & Module-Level Events with `@event`](#class-level--module-level-events-with-event)
 3. [API Overview](#api-overview)
 
@@ -174,6 +175,25 @@ asyncio.run(main())
 ```
 
 If there are no handlers, `emit_async(...)` returns immediately without error.
+
+
+# Subscribing Multiple Handlers at Once
+
+You can subscribe multiple handlers at once using a `list`, `tuple`, or `set`:
+
+```python
+listener += [handler1, handler2, handler3]
+listener += (handler4, handler5)
+listener += {handler6, handler7, handler8} # Order is not guaranteed for sets
+```
+
+To unsubscribe multiple handlers in one step, use the same container type:
+
+```python
+listener -= [handler1, handler2, handler3]
+listener -= (handler4, handler5)
+listener -= {handler6, handler7, handler8}
+```
 
 
 ### Class-Level & Module-Level Events with `@event`
