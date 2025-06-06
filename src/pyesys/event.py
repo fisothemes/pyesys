@@ -70,11 +70,13 @@ class Event:
             self._outer -= handler
             return self
 
-        def subscribe(self, handler: Callable[P, None]) -> None:
+        def subscribe(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> None:
             """
             Alternative to += operator for subscribing handlers.
 
-            :param handler: Callable to subscribe.
+            Supports single callables or iterables (list, tuple, set).  
+
+            :param handler: Callable or iterable of callables to subscribe.
             :raises TypeError: If handler is not callable.
             """
             self._outer += handler
