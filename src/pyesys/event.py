@@ -3,7 +3,7 @@ import inspect
 import asyncio
 import weakref
 import gc
-from typing import Callable, List, Tuple, Optional, Union, Coroutine, Any
+from typing import Callable, List, Tuple, Optional, Union, Iterable, Coroutine, Any
 from concurrent.futures import Future
 
 from .handler import EventHandler, ErrorHandler, default_error_handler, P
@@ -44,11 +44,13 @@ class Event:
             self._outer = outer
             self._per_instance = None  # Set by EventDescriptor for introspection
 
-        def __iadd__(self, handler: Callable[P, None]) -> "Event.Listener":
+        def __iadd__(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> "Event.Listener":
             """
-            Subscribe a new handler to the Event.
+            Subscribe one or more handlers to the Event.
 
-            :param handler: Callable matching signature P -> None.
+            Supports single callables or iterables (list, tuple, set).
+
+            :param handler: Callable or iterable of callables to subscribe.
             :return: Self for chaining.
             :raises TypeError: If handler is not callable.
             """
@@ -232,25 +234,23 @@ class Event:
             except ValueError:
                 pass # Handler not found, ignore silently
 
-    def __iadd__(self, handler: Callable[P, None]) -> "Event":
+    def __iadd__(self, handler: Union[Callable[P, None], Iterable[Callable[P, None]]]) -> "Event":
         """
-        Subscribe a handler to this Event with validation and duplicate control.
+        Subscribe one or more handlers to this Event with validation and duplicate control.
 
-        Performs runtime signature checking if an example was provided.
+        Supports single callables or iterables (list, tuple, set).
 
-        :param handler: Callable to subscribe.
+        Performs runtime signature checking.
+
+        :param handler: Callable or iterable of callables to subscribe.
         :return: Self for chaining.
         :raises TypeError: If handler is invalid or incompatible.
         """
-        self._validate_handler(handler)
-
-        h = handler if isinstance(handler, EventHandler) else EventHandler(handler)
-        with self._lock:
-            if self._allow_duplicates:
-                self._handlers.append(h)
-            else:
-                if h not in self._handlers:
-                    self._handlers.append(h)
+        if isinstance(handler, (list, tuple, set)):
+            for h in handler:
+                self._subscribe_one(h)
+        else:
+            self._subscribe_one(handler)
         return self
 
     def __isub__(self, handler: Callable[P, None]) -> "Event":
