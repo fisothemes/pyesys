@@ -1,17 +1,37 @@
-from pyesys import create_event
+from pyesys.prop import event
+from abc import ABC
 
-event_a, on_a = create_event(example=lambda msg: None)
-event_b, on_b = create_event(example=lambda msg: None)
+class Step(ABC):
+    @event
+    def on_done(self, data): ...
 
-def handler_a(msg):
-    print(f"Handler A received: {msg}")
-    event_b.emit(f"{msg} -> from A")
+    @on_done.emitter
+    def done(self, data=None): ...
 
-def handler_b(msg):
-    print(f"Handler B received: {msg}")
 
-on_a += handler_a
-on_b += handler_b
+class StepOne(Step):
+    def run(self, data=None):
+        print("Step 1: Doing work...")
+        self.done("data-from-step-1")
 
-# Trigger the first
-event_a.emit("Hello")
+
+class StepTwo(Step):
+    def run(self, input_data: str):
+        print(f"Step 2: Received '{input_data}', doing more work...")
+        self.done("result-from-step-2")
+
+
+class StepThree(Step):
+    def run(self, result: str):
+        print(f"Step 3: Finalising with result '{result}'")
+        self.done()
+
+
+s1, s2, s3 = StepOne(), StepTwo(), StepThree()
+
+# Chain events: StepOne → StepTwo → StepThree
+s1.on_done += s2.run
+s2.on_done += s3.run
+
+# Kick off the chain
+s1.run()
