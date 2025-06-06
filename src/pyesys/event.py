@@ -206,7 +206,7 @@ class Event:
         """ 
         Subscribe a single handler to this Event with validation and duplicate control.
 
-        Performs runtime signature checking if an example was provided.
+        Performs runtime signature checking.
 
         :param handler: Callable to subscribe.
         :raises TypeError: If handler is invalid or incompatible.
@@ -215,7 +215,8 @@ class Event:
 
         h = handler if isinstance(handler, EventHandler) else EventHandler(handler)
         with self._lock:
-            self._handlers.append(h)
+            if self._allow_duplicates or h not in self._handlers:
+                self._handlers.append(h)
 
     def unsubscribe_one(self, handler: Callable[P, None]) -> None:
         """
