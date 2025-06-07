@@ -1,4 +1,4 @@
-from pyesys.prop import event
+from pyesys import event
 from abc import ABC
 
 class Step(ABC):
