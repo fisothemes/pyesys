@@ -149,14 +149,17 @@ class TaskView(ttk.Frame):
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill="x")
 
-        self.add_button = ttk.Button(button_frame, text="Add", state="disabled")
+        self.add_button = ttk.Button(button_frame, text="Add", state="normal", command=self._add_task_pressed)
         self.add_button.pack(side="left", padx=5, pady=5)
 
-        self.update_button = ttk.Button(button_frame, text="Update", state="disabled")
+        self.update_button = ttk.Button(button_frame, text="Update", state="disabled", command=self._update_task_pressed)
         self.update_button.pack(side="left", padx=5, pady=5)
 
-        self.delete_button = ttk.Button(button_frame, text="Delete", state="disabled")
+        self.delete_button = ttk.Button(button_frame, text="Delete", state="disabled", command=self._delete_task_pressed)
         self.delete_button.pack(side="left", padx=5, pady=5)
+
+        self.clear_button = ttk.Button(button_frame, text="Clear", state="normal", command=self._clear_tasks_pressed)
+        self.clear_button.pack(side="left", padx=5, pady=5)
         
     @property
     def selected_index(self) -> int:
@@ -179,33 +182,56 @@ class TaskView(ttk.Frame):
         ...
 
     @on_task_selected.emitter
-    def _task_selected(self, e: tk.Event): 
+    def _task_selected(self, e: tk.Event):
+        # update selected index
         sel = self.task_tree.selection()
         self.__selected_index = int(sel[0]) if sel else -1
 
+        if len(sel) > 0: 
+            # populate input fields
+            task = self.task_tree.item(sel[0], "values")
+            self.task_entry.delete(0, tk.END)
+            self.task_entry.insert(0, task[0])
+            self.status_combo.set(task[1])
+
+            # enable buttons
+            self.update_button.config(state="normal")
+            self.delete_button.config(state="normal")
+
     @event
-    def on_add_task(self, task: str, status: TaskStatus):
+    def on_add_task_pressed(self):
         """Event fired when user want to add task"""
         ...
 
-    @on_add_task.emitter
-    def _add_task(self, task: str, status: TaskStatus): ...
+    @on_add_task_pressed.emitter
+    def _add_task_pressed(self): ...
 
     @event
-    def on_update_task(self, index: int, task: str, status: TaskStatus):
+    def on_update_task_pressed(self):
         """Event fired when user want to update task"""
         ...
 
-    @on_update_task.emitter
-    def _update_task(self, index: int, task: str, status: TaskStatus): ...
+    @on_update_task_pressed.emitter
+    def _update_task_pressed(self): ...
 
     @event
-    def on_delete_task(self, index: int):
+    def on_delete_task_pressed(self):
         """Event fired when user want to delete task"""
         ...
 
-    @on_delete_task.emitter
-    def _delete_task(self, index: int): ...
+    @on_delete_task_pressed.emitter
+    def _delete_task_pressed(self): ...
+
+    @event
+    def on_clear_tasks_pressed(self):
+        """Event fired when user want to clear tasks"""
+        ...
+
+    @on_clear_tasks_pressed.emitter
+    def _clear_tasks_pressed(self):
+        self.task_tree.selection_remove(self.task_tree.selection())
+        self.update_button.config(state="disabled")
+        self.delete_button.config(state="disabled")
 
 
 class TaskPresenter:
