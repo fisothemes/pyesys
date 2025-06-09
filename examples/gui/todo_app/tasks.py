@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 from dataclasses import dataclass, astuple
 from sqlite3 import Connection
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from pyesys import create_event, event
 
 import tkinter as tk
@@ -170,6 +170,13 @@ class TaskView(ttk.Frame):
         for i, task in enumerate(tasks):
             self.task_tree.insert("", "end", iid=str(i), values=(task.task, task.status))
 
+    def get_task_from_input(self) -> Task:
+        """Gets input field of the task entry and converts it into a Task"""
+        return Task(
+            task=self.task_entry.get(),
+            status=TaskStatus(self.status_combo.get())
+        )
+
     def show_error(self, title: str, message: str):
         messagebox.showerror(title, message)
 
@@ -235,7 +242,51 @@ class TaskView(ttk.Frame):
 
 
 class TaskPresenter:
-    def __init__(self, model: TaskRepository, view: TaskView): ...
+    def __init__(self, model: TaskRepository, view: TaskView): 
+        self.__model = model
+        self.__view = view
+
+        # Connect events.
+        self.__view.on_add_task_pressed += self.__handle_add_task_pressed
+        self.__view.on_update_task_pressed += self.__handle_update_task_pressed
+        self.__view.on_delete_task_pressed += self.__handle_delete_task_pressed
+        self.__view.on_clear_tasks_pressed += self.__handle_clear_tasks_pressed
+
+    def update(self):
+        self.__view.update_list(self.__model.get_all())
+
+    def __handle_add_task_pressed(self):
+        task = self.__view.get_task_from_input()
+        if not task.task.strip():
+            self.__view.show_error("Error", "Task cannot be empty")
+            return
+        self.__model.create(task)
+        self.update()
+
+    def __handle_update_task_pressed(self):
+        task = self.__view.get_task_from_input()
+        
+        if not task.task.strip():
+            self.__view.show_error("Error", "Task cannot be empty")
+        elif self.__view.selected_index < 0 or self.__view.selected_index >= self.__model.read_task_count():
+            self.__view.show_error("Error", "No task selected")
+            return
+        
+        self.__model.update(self.__view.selected_index, task)
+        self.update()
+
+    def __handle_delete_task_pressed(self):
+        
+        if self.__view.selected_index < 0 or self.__view.selected_index >= self.__model.read_task_count():
+            self.__view.show_error("Error", "No task selected")
+            return
+
+        self.__model.delete(self.__view.selected_index)
+        self.update()
+
+    def __handle_clear_tasks_pressed(self):
+        self.__model.clear()
+        self.update()
 
 
 if __name__ == "__main__":
@@ -252,7 +303,7 @@ if __name__ == "__main__":
     repo = TaskRepository(conn=conn, table=table_name)
 
     sample_tasks = [
-        Task(task="Complete project documentation"),
+        Task(task="Complete project documentation", status=TaskStatus.IN_PROGRESS),
         Task(task="Review code changes"),
         Task(task="Deploy to production"),
     ]
