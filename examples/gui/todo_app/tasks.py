@@ -2,7 +2,7 @@ from enum import StrEnum, auto
 from dataclasses import dataclass, astuple
 from sqlite3 import Connection
 from typing import List, Optional, Tuple
-from pyesys import create_event, event
+from pyesys import event
 
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -80,7 +80,7 @@ class TaskRepository:
     def read_by_status(self, status: TaskStatus) -> List[Task]:
         cur = self.conn.execute(f"SELECT * FROM {self.table} WHERE status=?", (status,))
         return [Task(*row) for row in cur.fetchall()]
-    
+
     def read_task_count(self) -> Optional[int]:
         cur = self.conn.execute(f"SELECT COUNT(*) FROM {self.table}")
         return cur.fetchone()[0] if cur else None
@@ -104,12 +104,9 @@ class TaskView(ttk.Frame):
         self.__create_widgets()
 
     def __create_widgets(self):
-        # Main vertical stack frame
-        main_frame = ttk.Frame(self)
-        main_frame.pack(fill="both", expand=True)
 
         # Task Treeview section (with scrollbar)
-        tree_frame = ttk.Frame(main_frame)
+        tree_frame = ttk.Frame(self)
         tree_frame.pack(fill="both", expand=True, pady=(0, 10))  # Stack at top
 
         self.task_tree = ttk.Treeview(
@@ -119,7 +116,7 @@ class TaskView(ttk.Frame):
         self.task_tree.heading("Status", text="Status")
         self.task_tree.column("Task", width=300)
         self.task_tree.column("Status", width=100)
-        self.task_tree.bind('<<TreeviewSelect>>', self._task_selected)
+        self.task_tree.bind("<<TreeviewSelect>>", self._task_selected)
         self.task_tree.pack(side="left", fill="both", expand=True)
 
         # Add scrollbar
@@ -129,8 +126,8 @@ class TaskView(ttk.Frame):
         self.task_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
 
-        #Input section (LabelFrame with Entry + Combobox)
-        input_frame = ttk.LabelFrame(main_frame, text="Task Details", padding="5")
+        # Input section (LabelFrame with Entry + Combobox)
+        input_frame = ttk.LabelFrame(self, text="Task Details", padding="5")
         input_frame.pack(fill="x", pady=(0, 10))
 
         ttk.Label(input_frame, text="Task:").grid(row=0, column=0, sticky="w")
@@ -146,21 +143,38 @@ class TaskView(ttk.Frame):
         input_frame.columnconfigure(1, weight=1)
 
         # Button section (Add/Update/Delete)
-        button_frame = ttk.Frame(main_frame)
+        button_frame = ttk.Frame(self)
         button_frame.pack(fill="x")
 
-        self.add_button = ttk.Button(button_frame, text="Add", state="normal", command=self._add_task_pressed)
+        self.add_button = ttk.Button(
+            button_frame, text="Add", state="normal", command=self._add_task_pressed
+        )
         self.add_button.pack(side="left", padx=5, pady=5)
 
-        self.update_button = ttk.Button(button_frame, text="Update", state="disabled", command=self._update_task_pressed)
+        self.update_button = ttk.Button(
+            button_frame,
+            text="Update",
+            state="disabled",
+            command=self._update_task_pressed,
+        )
         self.update_button.pack(side="left", padx=5, pady=5)
 
-        self.delete_button = ttk.Button(button_frame, text="Delete", state="disabled", command=self._delete_task_pressed)
+        self.delete_button = ttk.Button(
+            button_frame,
+            text="Delete",
+            state="disabled",
+            command=self._delete_task_pressed,
+        )
         self.delete_button.pack(side="left", padx=5, pady=5)
 
-        self.clear_button = ttk.Button(button_frame, text="Clear", state="normal", command=self._clear_tasks_pressed)
+        self.clear_button = ttk.Button(
+            button_frame,
+            text="Clear",
+            state="normal",
+            command=self._clear_tasks_pressed,
+        )
         self.clear_button.pack(side="left", padx=5, pady=5)
-        
+
     @property
     def selected_index(self) -> int:
         return self.__selected_index
@@ -168,13 +182,14 @@ class TaskView(ttk.Frame):
     def update_list(self, tasks: List[Task]):
         self.task_tree.delete(*self.task_tree.get_children())
         for i, task in enumerate(tasks):
-            self.task_tree.insert("", "end", iid=str(i), values=(task.task, task.status))
+            self.task_tree.insert(
+                "", "end", iid=str(i), values=(task.task, task.status)
+            )
 
     def get_task_from_input(self) -> Task:
         """Gets input field of the task entry and converts it into a Task"""
         return Task(
-            task=self.task_entry.get(),
-            status=TaskStatus(self.status_combo.get())
+            task=self.task_entry.get(), status=TaskStatus(self.status_combo.get())
         )
 
     def show_error(self, title: str, message: str):
@@ -194,7 +209,7 @@ class TaskView(ttk.Frame):
         sel = self.task_tree.selection()
         self.__selected_index = int(sel[0]) if sel else -1
 
-        if len(sel) > 0: 
+        if len(sel) > 0:
             # populate input fields
             task = self.task_tree.item(sel[0], "values")
             self.task_entry.delete(0, tk.END)
@@ -242,7 +257,7 @@ class TaskView(ttk.Frame):
 
 
 class TaskPresenter:
-    def __init__(self, model: TaskRepository, view: TaskView): 
+    def __init__(self, model: TaskRepository, view: TaskView):
         self.__model = model
         self.__view = view
 
@@ -251,6 +266,9 @@ class TaskPresenter:
         self.__view.on_update_task_pressed += self.__handle_update_task_pressed
         self.__view.on_delete_task_pressed += self.__handle_delete_task_pressed
         self.__view.on_clear_tasks_pressed += self.__handle_clear_tasks_pressed
+
+        # Display initial tasks
+        self.update()
 
     def update(self):
         self.__view.update_list(self.__model.get_all())
@@ -265,19 +283,25 @@ class TaskPresenter:
 
     def __handle_update_task_pressed(self):
         task = self.__view.get_task_from_input()
-        
+
         if not task.task.strip():
             self.__view.show_error("Error", "Task cannot be empty")
-        elif self.__view.selected_index < 0 or self.__view.selected_index >= self.__model.read_task_count():
+        elif (
+            self.__view.selected_index < 0
+            or self.__view.selected_index >= self.__model.read_task_count()
+        ):
             self.__view.show_error("Error", "No task selected")
             return
-        
+
         self.__model.update(self.__view.selected_index, task)
         self.update()
 
     def __handle_delete_task_pressed(self):
-        
-        if self.__view.selected_index < 0 or self.__view.selected_index >= self.__model.read_task_count():
+
+        if (
+            self.__view.selected_index < 0
+            or self.__view.selected_index >= self.__model.read_task_count()
+        ):
             self.__view.show_error("Error", "No task selected")
             return
 
@@ -319,8 +343,6 @@ if __name__ == "__main__":
     root.geometry("600x400")
 
     view = TaskView(root)
-
-    view.update_list(repo.get_all())
 
     presenter = TaskPresenter(repo, view)
 
