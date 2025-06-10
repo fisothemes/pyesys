@@ -1,0 +1,167 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction &mdash; PyESys 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage Guide" href="usage.html" />
+    <link rel="prev" title="Welcome to PyESys’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PyESys
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#why-pyesys">Why PyESys?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#goals">Goals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#use-cases">Use Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design-philosophy">Design Philosophy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyESys</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Introduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/intro.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<p><strong>PyESys</strong> is a Python-native, thread-safe, type-safe event system designed to feel intuitive in real-world applications — especially those involving concurrency, simulation, or external control.</p>
+<hr class="docutils" />
+<section id="why-pyesys">
+<h2>Why PyESys?<a class="headerlink" href="#why-pyesys" title="Link to this heading"></a></h2>
+<p>While Python lacks a built-in observer pattern, many third-party libraries exist — but most feel <strong>foreign to the language</strong>. They often:</p>
+<ul class="simple">
+<li><p>Depend on <strong>string-based global keys</strong> for event names</p></li>
+<li><p>Use <strong>shared registries</strong> that introduce tight coupling</p></li>
+<li><p>Are <strong>awkward</strong> to manage per-instance behaviour</p></li>
+<li><p>Handle <strong>async vs sync inconsistently</strong></p></li>
+<li><p>Leak memory when managing bound methods</p></li>
+<li><p>Feel nothing like Python or .NET’s event model</p></li>
+</ul>
+<p>PyESys was born from practical needs:</p>
+<p>&gt; “I was modelling and controlling a plant in real time (in its own thread/process), and I wanted a clean way to control it via external events. The existing solutions felt clunky or unfamiliar.”</p>
+</section>
+<hr class="docutils" />
+<section id="goals">
+<h2>Goals<a class="headerlink" href="#goals" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Per-instance events</strong> by default — no more global keys</p></li>
+<li><p>Seamless <strong>sync + async</strong> support (handlers, emitters)</p></li>
+<li><p>Automatic <strong>weak-reference clean-up</strong> for bound methods</p></li>
+<li><p>Familiar model similar to <strong>.NET events</strong></p></li>
+<li><p>Built to “just work” — no magic registries or ceremony</p></li>
+<li><p>Thread-safe emission and subscription</p></li>
+<li><p>Minimal memory management burden</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="use-cases">
+<h2>Use Cases<a class="headerlink" href="#use-cases" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Controlling long-running simulations from a UI or script</p></li>
+<li><p>Reacting to real-time data (sensor inputs, model outputs)</p></li>
+<li><p>Building testable, decoupled modules</p></li>
+<li><p>Replacing <cite>Observer</cite>/<cite>Signal</cite> constructs in Pythonic codebases</p></li>
+<li><p>Integrating <cite>.NET-style</cite> event patterns in scientific and industrial tooling</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="design-philosophy">
+<h2>Design Philosophy<a class="headerlink" href="#design-philosophy" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Explicit signatures</strong> — handler arity is enforced by example</p></li>
+<li><p><strong>Clean semantics</strong> — events feel like properties with <cite>+=</cite> and <cite>-=</cite> syntax</p></li>
+<li><p><strong>Thread &amp; coroutine friendly</strong> — safe in all contexts</p></li>
+<li><p><strong>Composable and modular</strong> — no central broker required</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to PyESys’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-right" title="Usage Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Goodwill Mzumala.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

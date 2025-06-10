@@ -1,0 +1,320 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage Guide &mdash; PyESys 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PyESys
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-and-emitting-events">Creating and Emitting Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-event-at-module-level">Using <cite>&#64;event</cite> at Module Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-event-at-class-level">Using <cite>&#64;event</cite> at Class Level</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bulk-subscribe-and-unsubscribe">Bulk Subscribe and Unsubscribe</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#chaining-events-across-instances">Chaining Events Across Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#async-handlers-with-emit-async">Async Handlers with <cite>emit_async</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-error-handling">Custom Error Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#clearing-and-introspection">Clearing and Introspection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#more-examples">More Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyESys</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Usage Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage-guide">
+<h1>Usage Guide<a class="headerlink" href="#usage-guide" title="Link to this heading"></a></h1>
+<p>This guide shows how to use PyESys to:</p>
+<ul class="simple">
+<li><p>Create and emit events</p></li>
+<li><p>Subscribe sync or async handlers</p></li>
+<li><p>Use <cite>&#64;event</cite> decorators (class/module level)</p></li>
+<li><p>Bulk subscribe/unsubscribe</p></li>
+<li><p>Chain events</p></li>
+<li><p>Handle errors safely</p></li>
+</ul>
+<hr class="docutils" />
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>PyESys requires Python 3.12+.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pyesys
+</pre></div>
+</div>
+<p>Or for local development:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/fisothemes/pyesys.git
+<span class="nb">cd</span><span class="w"> </span>pyesys
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="creating-and-emitting-events">
+<h2>Creating and Emitting Events<a class="headerlink" href="#creating-and-emitting-events" title="Link to this heading"></a></h2>
+<p>Use <cite>create_event(…)</cite> with a sample function that defines the expected handler signature:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyesys</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_event</span>
+
+<span class="n">event</span><span class="p">,</span> <span class="n">listener</span> <span class="o">=</span> <span class="n">create_event</span><span class="p">(</span><span class="n">example</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Handled:&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="n">listener</span> <span class="o">+=</span> <span class="n">handler</span>
+<span class="n">event</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here, any handler must accept one argument. The event runs all subscribed handlers safely when <cite>emit(…)</cite> is called.</p>
+</section>
+<hr class="docutils" />
+<section id="using-event-at-module-level">
+<h2>Using <cite>&#64;event</cite> at Module Level<a class="headerlink" href="#using-event-at-module-level" title="Link to this heading"></a></h2>
+<p>You can define reusable global events using <cite>&#64;event</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyesys</span><span class="w"> </span><span class="kn">import</span> <span class="n">event</span>
+
+<span class="nd">@event</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_hello</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+<span class="nd">@on_hello</span><span class="o">.</span><span class="n">emitter</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saying hello to </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handler</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received hello event for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+<span class="n">on_hello</span> <span class="o">+=</span> <span class="n">handler</span>
+<span class="n">hello</span><span class="p">(</span><span class="s2">&quot;World&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This sets up a global event <cite>on_hello</cite>, whose emitter <cite>hello()</cite> runs the body, then automatically fires all subscribed handlers with the same arguments.</p>
+</section>
+<hr class="docutils" />
+<section id="using-event-at-class-level">
+<h2>Using <cite>&#64;event</cite> at Class Level<a class="headerlink" href="#using-event-at-class-level" title="Link to this heading"></a></h2>
+<p>Class-level events are <strong>per instance</strong>, like <cite>.NET</cite> or GUI frameworks:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyesys</span><span class="w"> </span><span class="kn">import</span> <span class="n">event</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Button</span><span class="p">:</span>
+    <span class="nd">@event</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_click</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+
+    <span class="nd">@on_click</span><span class="o">.</span><span class="n">emitter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">click</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Button clicked!&quot;</span><span class="p">)</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">Button</span><span class="p">()</span>
+<span class="n">b</span><span class="o">.</span><span class="n">on_click</span> <span class="o">+=</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Handler called!&quot;</span><span class="p">)</span>
+<span class="n">b</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Each <cite>Button</cite> instance gets its own <cite>on_click</cite> event. The <cite>click()</cite> method prints a message and then automatically triggers the event.</p>
+</section>
+<hr class="docutils" />
+<section id="bulk-subscribe-and-unsubscribe">
+<h2>Bulk Subscribe and Unsubscribe<a class="headerlink" href="#bulk-subscribe-and-unsubscribe" title="Link to this heading"></a></h2>
+<p>You can add/remove multiple handlers at once using lists, sets, or tuples:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">a</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="o">...</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">b</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="o">...</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">c</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="n">listener</span> <span class="o">+=</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span>     <span class="c1"># Add all</span>
+<span class="n">listener</span> <span class="o">-=</span> <span class="p">{</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">}</span>        <span class="c1"># Remove some</span>
+</pre></div>
+</div>
+<p>This makes it easy to bind or unbind groups of related callbacks without looping.</p>
+</section>
+<hr class="docutils" />
+<section id="chaining-events-across-instances">
+<h2>Chaining Events Across Instances<a class="headerlink" href="#chaining-events-across-instances" title="Link to this heading"></a></h2>
+<p>You can chain events from one class to another, great for pipelines or steps:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyesys</span><span class="w"> </span><span class="kn">import</span> <span class="n">event</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Step</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="nd">@event</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span> <span class="o">...</span>
+
+    <span class="nd">@on_done</span><span class="o">.</span><span class="n">emitter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StepOne</span><span class="p">(</span><span class="n">Step</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Step 1: Doing work...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="s2">&quot;data-from-step-1&quot;</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StepTwo</span><span class="p">(</span><span class="n">Step</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step 2: Received &#39;</span><span class="si">{</span><span class="n">input_data</span><span class="si">}</span><span class="s2">&#39;, doing more work...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="s2">&quot;result-from-step-2&quot;</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StepThree</span><span class="p">(</span><span class="n">Step</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Step 3: Finalising with result &#39;</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
+
+<span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s3</span> <span class="o">=</span> <span class="n">StepOne</span><span class="p">(),</span> <span class="n">StepTwo</span><span class="p">(),</span> <span class="n">StepThree</span><span class="p">()</span>
+
+<span class="n">s1</span><span class="o">.</span><span class="n">on_done</span> <span class="o">+=</span> <span class="n">s2</span><span class="o">.</span><span class="n">run</span>
+<span class="n">s2</span><span class="o">.</span><span class="n">on_done</span> <span class="o">+=</span> <span class="n">s3</span><span class="o">.</span><span class="n">run</span>
+
+<span class="n">s1</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>What happens</strong>:
+1. <cite>s1.run()</cite> emits <cite>“data-from-step-1”</cite>
+2. <cite>s2.run(…)</cite> receives it, does work, emits its result
+3. <cite>s3.run(…)</cite> gets the final result</p>
+<p>This pattern models pipelines, workflows, and signal propagation.</p>
+</section>
+<hr class="docutils" />
+<section id="async-handlers-with-emit-async">
+<h2>Async Handlers with <cite>emit_async</cite><a class="headerlink" href="#async-handlers-with-emit-async" title="Link to this heading"></a></h2>
+<p>Mix sync and async handlers freely. Use <cite>emit_async()</cite> to await all:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_handler</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;async&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sync_handler</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sync&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="n">listener</span> <span class="o">+=</span> <span class="p">[</span><span class="n">sync_handler</span><span class="p">,</span> <span class="n">async_handler</span><span class="p">]</span>
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">emit_async</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Sync handlers run in a thread pool. Async ones are awaited properly. This is safe and parallel by design.</p>
+</section>
+<hr class="docutils" />
+<section id="custom-error-handling">
+<h2>Custom Error Handling<a class="headerlink" href="#custom-error-handling" title="Link to this heading"></a></h2>
+<p>Define your own handler for exceptions raised by subscribers:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">custom_handler</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">handler</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: </span><span class="si">{</span><span class="n">handler</span><span class="si">}</span><span class="s2"> raised </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">event</span><span class="p">,</span> <span class="n">listener</span> <span class="o">=</span> <span class="n">create_event</span><span class="p">(</span>
+    <span class="n">example</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">error_handler</span><span class="o">=</span><span class="n">custom_handler</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bad</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;fail&quot;</span><span class="p">)</span>
+<span class="n">listener</span> <span class="o">+=</span> <span class="n">bad</span>
+<span class="n">event</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The event will still run remaining handlers. By default, errors are printed to <cite>stderr</cite>.</p>
+</section>
+<hr class="docutils" />
+<section id="clearing-and-introspection">
+<h2>Clearing and Introspection<a class="headerlink" href="#clearing-and-introspection" title="Link to this heading"></a></h2>
+<p>You can query or clear handlers any time:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">listener</span><span class="o">.</span><span class="n">handler_count</span><span class="p">())</span>  <span class="c1"># active handlers</span>
+<span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">handlers</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+<span class="n">event</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">listener</span><span class="o">.</span><span class="n">handler_count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="more-examples">
+<h2>More Examples<a class="headerlink" href="#more-examples" title="Link to this heading"></a></h2>
+<p>You can find more complete usage examples in the GitHub repository:</p>
+<p>🔗 <a class="reference external" href="https://github.com/fisothemes/pyesys/tree/master/examples">https://github.com/fisothemes/pyesys/tree/master/examples</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="intro.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Goodwill Mzumala.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

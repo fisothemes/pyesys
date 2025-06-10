@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; PyESys 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage Guide" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PyESys
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.event.Event"><code class="docutils literal notranslate"><span class="pre">Event</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.Listener"><code class="docutils literal notranslate"><span class="pre">Event.Listener</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pyesys.event.Event.Listener.handler_count"><code class="docutils literal notranslate"><span class="pre">Event.Listener.handler_count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyesys.event.Event.Listener.subscribe"><code class="docutils literal notranslate"><span class="pre">Event.Listener.subscribe()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pyesys.event.Event.Listener.unsubscribe"><code class="docutils literal notranslate"><span class="pre">Event.Listener.unsubscribe()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.clear"><code class="docutils literal notranslate"><span class="pre">Event.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.emit"><code class="docutils literal notranslate"><span class="pre">Event.emit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.emit_async"><code class="docutils literal notranslate"><span class="pre">Event.emit_async()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.handler_count"><code class="docutils literal notranslate"><span class="pre">Event.handler_count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.handlers"><code class="docutils literal notranslate"><span class="pre">Event.handlers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.new"><code class="docutils literal notranslate"><span class="pre">Event.new()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.subscribe_one"><code class="docutils literal notranslate"><span class="pre">Event.subscribe_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.event.Event.unsubscribe_one"><code class="docutils literal notranslate"><span class="pre">Event.unsubscribe_one()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.event.create_event"><code class="docutils literal notranslate"><span class="pre">create_event()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.prop.EventDescriptor"><code class="docutils literal notranslate"><span class="pre">EventDescriptor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.prop.EventDescriptor.emitter"><code class="docutils literal notranslate"><span class="pre">EventDescriptor.emitter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.prop.event"><code class="docutils literal notranslate"><span class="pre">event()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.handler.ErrorHandler"><code class="docutils literal notranslate"><span class="pre">ErrorHandler</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.handler.EventHandler"><code class="docutils literal notranslate"><span class="pre">EventHandler</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.handler.EventHandler.get_callback"><code class="docutils literal notranslate"><span class="pre">EventHandler.get_callback()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.handler.EventHandler.get_info"><code class="docutils literal notranslate"><span class="pre">EventHandler.get_info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.handler.EventHandler.is_alive"><code class="docutils literal notranslate"><span class="pre">EventHandler.is_alive()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyesys.handler.EventHandler.is_async"><code class="docutils literal notranslate"><span class="pre">EventHandler.is_async()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pyesys.handler.default_error_handler"><code class="docutils literal notranslate"><span class="pre">default_error_handler()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyESys</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pyesys.event">
+<span id="api-reference"></span><h1>API Reference<a class="headerlink" href="#module-pyesys.event" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyesys.event.Event">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyesys.event.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyesys.handler.ErrorHandler" title="pyesys.handler.ErrorHandler"><span class="pre">ErrorHandler</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyesys/event.html#Event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event" title="Link to this definition"></a></dt>
+<dd><p>A thread-safe event dispatcher with comprehensive features:</p>
+<ul class="simple">
+<li><p>Weak-reference support for bound methods (automatic cleanup)</p></li>
+<li><p>Runtime signature checking via example function</p></li>
+<li><p>Configurable error handling with consistent behavior</p></li>
+<li><p>Introspection: handler_count, handlers list</p></li>
+<li><p>Duplicate subscription control</p></li>
+<li><p>Mixed sync/async support with proper resource management</p></li>
+<li><p>Performance optimizations with lazy cleanup</p></li>
+</ul>
+<p>Generic P: parameter specification for handler arguments.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pyesys.event.Event.Listener">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Listener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyesys.event.Event" title="pyesys.event.Event"><span class="pre">Event</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyesys/event.html#Event.Listener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.Listener" title="Link to this definition"></a></dt>
+<dd><p>Provides a restricted interface to subscribe/unsubscribe handlers
+to the outer Event without exposing emission or clearing capabilities.</p>
+<p>This separation ensures subscribers cannot accidentally trigger events
+or clear all handlers.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.Listener.handler_count">
+<span class="sig-name descname"><span class="pre">handler_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.Listener.handler_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.Listener.handler_count" title="Link to this definition"></a></dt>
+<dd><p>Number of currently alive handlers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Count of active handlers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.Listener.subscribe">
+<span class="sig-name descname"><span class="pre">subscribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.Listener.subscribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.Listener.subscribe" title="Link to this definition"></a></dt>
+<dd><p>Alternative to += operator for subscribing handlers.</p>
+<p>Supports single callables or iterables (list, tuple, set).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – Callable or iterable of callables to subscribe.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – If handler is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.Listener.unsubscribe">
+<span class="sig-name descname"><span class="pre">unsubscribe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.Listener.unsubscribe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.Listener.unsubscribe" title="Link to this definition"></a></dt>
+<dd><p>Alternative to -= operator for unsubscribing handlers.</p>
+<p>Supports single callables or iterables (list, tuple, set).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – Callable or iterable of callables to unsubscribe.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – If handler is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.clear" title="Link to this definition"></a></dt>
+<dd><p>Remove all subscribed handlers from this Event.</p>
+<p>This is useful for cleanup or resetting event state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.emit">
+<span class="sig-name descname"><span class="pre">emit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*args:</span> <span class="pre">~typing.~P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs:</span> <span class="pre">~typing.~P</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.emit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.emit" title="Link to this definition"></a></dt>
+<dd><p>Emit the event synchronously, invoking all subscribed handlers.</p>
+<p>Error handling isolates exceptions: one handler’s exception does not
+prevent others from running. Dead bound-method handlers are automatically
+removed during cleanup.</p>
+<p>Async handlers that return coroutines are silently ignored in sync emission.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Positional arguments matching signature P.</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments matching signature P.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.emit_async">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">emit_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*args:</span> <span class="pre">~typing.~P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs:</span> <span class="pre">~typing.~P</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.emit_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.emit_async" title="Link to this definition"></a></dt>
+<dd><p>Asynchronously emit the event, invoking all subscribed handlers concurrently.</p>
+<p>Handlers that are coroutine functions will be awaited; regular callables
+will be scheduled on the default executor. All exceptions are consistently
+routed to the configured error_handler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Positional arguments matching signature P.</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments matching signature P.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.handler_count">
+<span class="sig-name descname"><span class="pre">handler_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.handler_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.handler_count" title="Link to this definition"></a></dt>
+<dd><p>Number of currently alive handlers subscribed.</p>
+<p>This property triggers cleanup of dead handlers for accurate counting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Count of active handlers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pyesys.event.Event.handlers">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">handlers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#pyesys.event.Event.handlers" title="Link to this definition"></a></dt>
+<dd><p>Return a list of currently alive handler callables.</p>
+<p>This property triggers cleanup and reconstructs callable references.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of active handler functions or bound methods.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.new">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">new</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyesys.handler.ErrorHandler" title="pyesys.handler.ErrorHandler"><span class="pre">ErrorHandler</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#pyesys.event.Event" title="pyesys.event.Event"><span class="pre">Event</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#pyesys.event.Event.Listener" title="pyesys.event.Event.Listener"><span class="pre">Listener</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.new"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.new" title="Link to this definition"></a></dt>
+<dd><p>Factory method to create an Event with runtime signature checking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> – Example function whose signature defines allowed handler signature.</p></li>
+<li><p><strong>allow_duplicates</strong> – If True, same handler can be subscribed multiple times.</p></li>
+<li><p><strong>error_handler</strong> – Custom error handler for exceptions during emission.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (Event instance, Listener interface).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – If example is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.subscribe_one">
+<span class="sig-name descname"><span class="pre">subscribe_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.subscribe_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.subscribe_one" title="Link to this definition"></a></dt>
+<dd><p>Subscribe a single handler to this Event with validation and duplicate control.</p>
+<p>Performs runtime signature checking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – Callable to subscribe.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – If handler is invalid or incompatible.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.event.Event.unsubscribe_one">
+<span class="sig-name descname"><span class="pre">unsubscribe_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/event.html#Event.unsubscribe_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.event.Event.unsubscribe_one" title="Link to this definition"></a></dt>
+<dd><p>Unsubscribe a single handler from this Event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – Callable previously subscribed.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> – If handler is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyesys.event.create_event">
+<span class="sig-prename descclassname"><span class="pre">pyesys.event.</span></span><span class="sig-name descname"><span class="pre">create_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">example</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_duplicates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pyesys.handler.ErrorHandler" title="pyesys.handler.ErrorHandler"><span class="pre">ErrorHandler</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#pyesys.event.Event" title="pyesys.event.Event"><span class="pre">Event</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#pyesys.event.Event.Listener" title="pyesys.event.Event.Listener"><span class="pre">Listener</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#pyesys.event.create_event" title="Link to this definition"></a></dt>
+<dd><p>Factory method to create an Event with runtime signature checking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>example</strong> – Example function whose signature defines allowed handler signature.</p></li>
+<li><p><strong>allow_duplicates</strong> – If True, same handler can be subscribed multiple times.</p></li>
+<li><p><strong>error_handler</strong> – Custom error handler for exceptions during emission.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (Event instance, Listener interface).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – If example is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class" id="module-pyesys.prop">
+<dt class="sig sig-object py" id="pyesys.prop.EventDescriptor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyesys.prop.</span></span><span class="sig-name descname"><span class="pre">EventDescriptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyesys/prop.html#EventDescriptor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.prop.EventDescriptor" title="Link to this definition"></a></dt>
+<dd><p>Unified descriptor for both module-level and class-level events.</p>
+<ul class="simple">
+<li><p>If used at module level (no __set_name__), it holds a single global Event.</p></li>
+<li><p>If used inside a class (after __set_name__), it manages a per-instance Event.</p></li>
+</ul>
+<p>Features:
+- Automatic signature detection and validation
+- Per-instance events for class usage
+- Global events for module usage
+- Emitter decorator pattern
+- Mixed sync/async handler support with proper resource management</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.prop.EventDescriptor.emitter">
+<span class="sig-name descname"><span class="pre">emitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pyesys/prop.html#EventDescriptor.emitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.prop.EventDescriptor.emitter" title="Link to this definition"></a></dt>
+<dd><p>Decorator for the emitter function.
+Wraps fn so that after running its body, it fires the appropriate Event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> – Function to wrap as an emitter.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Wrapped function that emits events after execution.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – If fn is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyesys.prop.event">
+<span class="sig-prename descclassname"><span class="pre">pyesys.prop.</span></span><span class="sig-name descname"><span class="pre">event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pyesys.prop.EventDescriptor" title="pyesys.prop.EventDescriptor"><span class="pre">EventDescriptor</span></a></span></span><a class="reference internal" href="_modules/pyesys/prop.html#event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.prop.event" title="Link to this definition"></a></dt>
+<dd><p>Decorator to create a module-level or class-level event.</p>
+<p>This unified decorator automatically handles both use cases:
+- When used at module level: creates a global event
+- When used in a class: creates per-instance events</p>
+<p>Usage:
+.. code-block:: python</p>
+<blockquote>
+<div><p>&#64;event
+def on_something(…):</p>
+<blockquote>
+<div><p>‘’’Event signature definition’’’
+pass</p>
+</div></blockquote>
+<p>&#64;on_something.emitter
+def do_action(…):</p>
+<blockquote>
+<div><p>‘’’Action that triggers the event’’’
+# Your logic here
+pass  # Event automatically emitted after this</p>
+</div></blockquote>
+</div></blockquote>
+<p>In a class, this becomes a per-instance event; at module level,
+it’s a single global event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> – Function defining the event signature.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>EventDescriptor that manages the event.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>TypeError</strong> – If func is not callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class" id="module-pyesys.handler">
+<dt class="sig sig-object py" id="pyesys.handler.ErrorHandler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyesys.handler.</span></span><span class="sig-name descname"><span class="pre">ErrorHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyesys/handler.html#ErrorHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.ErrorHandler" title="Link to this definition"></a></dt>
+<dd><p>Protocol for custom error handlers used in event emission.</p>
+<p>Error handlers receive exceptions that occur during handler execution
+and can implement custom logging, reporting, or recovery logic.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pyesys.handler.EventHandler">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pyesys.handler.</span></span><span class="sig-name descname"><span class="pre">EventHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyesys/handler.html#EventHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.EventHandler" title="Link to this definition"></a></dt>
+<dd><p>Wraps a callable handler with advanced features:</p>
+<ul class="simple">
+<li><p>Weak-reference support for bound methods (prevents memory leaks)</p></li>
+<li><p>Automatic cleanup when instances are garbage-collected</p></li>
+<li><p>Proper equality and hashing for duplicate detection</p></li>
+<li><p>Thread-safe callback reconstruction</p></li>
+<li><p>Handles both sync and async callables appropriately</p></li>
+</ul>
+<p>This class handles the complexity of managing bound method references
+while providing a simple callable interface.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.handler.EventHandler.get_callback">
+<span class="sig-name descname"><span class="pre">get_callback</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">P</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/handler.html#EventHandler.get_callback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.EventHandler.get_callback" title="Link to this definition"></a></dt>
+<dd><p>Return the current callable, reconstructing bound methods if necessary.</p>
+<p>This method handles the complexity of recreating bound methods from
+their components while checking for instance liveness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The original function or bound method, or None if dead.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.handler.EventHandler.get_info">
+<span class="sig-name descname"><span class="pre">get_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pyesys/handler.html#EventHandler.get_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.EventHandler.get_info" title="Link to this definition"></a></dt>
+<dd><p>Get detailed information about this handler for debugging purposes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing handler information.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.handler.EventHandler.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/pyesys/handler.html#EventHandler.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.EventHandler.is_alive" title="Link to this definition"></a></dt>
+<dd><p>Check if this handler is still alive and can be invoked.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>False if it was a bound method and the instance is gone, True otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pyesys.handler.EventHandler.is_async">
+<span class="sig-name descname"><span class="pre">is_async</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/pyesys/handler.html#EventHandler.is_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.EventHandler.is_async" title="Link to this definition"></a></dt>
+<dd><p>Check if this handler is async (coroutine function).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the handler is async.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pyesys.handler.default_error_handler">
+<span class="sig-prename descclassname"><span class="pre">pyesys.handler.</span></span><span class="sig-name descname"><span class="pre">default_error_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exception</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Exception</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pyesys/handler.html#default_error_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pyesys.handler.default_error_handler" title="Link to this definition"></a></dt>
+<dd><p>Default error handler that prints exceptions to stderr.</p>
+<p>This provides basic error reporting without causing the application to crash
+when event handlers raise exceptions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>exception</strong> – The exception that was raised.</p></li>
+<li><p><strong>handler</strong> – The handler that raised the exception (may be None).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Goodwill Mzumala.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

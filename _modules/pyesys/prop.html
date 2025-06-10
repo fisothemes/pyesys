@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pyesys.prop &mdash; PyESys 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            PyESys
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PyESys</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pyesys.prop</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pyesys.prop</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">weakref</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.event</span><span class="w"> </span><span class="kn">import</span> <span class="n">Event</span>
+
+<span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>  <span class="c1"># Parameter spec for both module and class events</span>
+
+<span class="c1"># Shared thread pool for async handler execution in sync contexts</span>
+<span class="n">_async_executor</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">thread_name_prefix</span><span class="o">=</span><span class="s2">&quot;PyESys-Async&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_async_callable</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if a callable is async, handling bound methods correctly.</span>
+
+<span class="sd">    :param func: Callable to check.</span>
+<span class="sd">    :return: True if the callable is async.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="c1"># Handle bound methods - check the underlying function</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s2">&quot;__func__&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__func__</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="EventDescriptor">
+<a class="viewcode-back" href="../../api.html#pyesys.prop.EventDescriptor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EventDescriptor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unified descriptor for both module-level and class-level events.</span>
+
+<span class="sd">    - If used at module level (no __set_name__), it holds a single global Event.</span>
+<span class="sd">    - If used inside a class (after __set_name__), it manages a per-instance Event.</span>
+
+<span class="sd">    Features:</span>
+<span class="sd">    - Automatic signature detection and validation</span>
+<span class="sd">    - Per-instance events for class usage</span>
+<span class="sd">    - Global events for module usage</span>
+<span class="sd">    - Emitter decorator pattern</span>
+<span class="sd">    - Mixed sync/async handler support with proper resource management</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the EventDescriptor with a signature-defining function.</span>
+
+<span class="sd">        :param func: Function whose signature defines the event parameters.</span>
+<span class="sd">        :raises TypeError: If func is not callable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Event signature must be callable, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Store optimized signature information instead of full signature object</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_kinds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">kind</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_original_sig</span> <span class="o">=</span> <span class="n">sig</span>  <span class="c1"># Keep for error messages and complex validation</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span><span class="p">:</span> <span class="n">weakref</span><span class="o">.</span><span class="n">WeakKeyDictionary</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">weakref</span><span class="o">.</span><span class="n">WeakKeyDictionary</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_counter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Called when class is created; switches to per-instance mode.</span>
+
+<span class="sd">        :param owner: The class that owns this descriptor.</span>
+<span class="sd">        :param name: The attribute name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the appropriate event listener based on access context.</span>
+
+<span class="sd">        :param instance: Instance accessing the descriptor (None for class access).</span>
+<span class="sd">        :param owner: Class owning the descriptor.</span>
+<span class="sd">        :return: Event.Listener for subscription operations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Accessed on class: return this descriptor</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="c1"># Accessed on instance: return (or create) that instance&#39;s Event listener</span>
+        <span class="n">ev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ev</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># For class-level events, create signature without &#39;self&#39; parameter</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Remove first parameter (self) for class events</span>
+                <span class="n">class_param_kinds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_kinds</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">class_param_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_count</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">class_param_kinds</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">class_param_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">ev</span><span class="p">,</span> <span class="n">listener</span> <span class="o">=</span> <span class="n">Event</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_create_example_func</span><span class="p">(</span><span class="n">class_param_kinds</span><span class="p">,</span> <span class="n">class_param_count</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span><span class="p">[</span><span class="n">instance</span><span class="p">]</span> <span class="o">=</span> <span class="n">ev</span>
+
+            <span class="c1"># Link the new listener back to the per-instance map for introspection</span>
+            <span class="n">listener</span><span class="o">.</span><span class="n">_per_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span>
+            <span class="k">return</span> <span class="n">listener</span>
+
+        <span class="c1"># Existing Event: get its listener and ensure proper linking</span>
+        <span class="n">listener</span> <span class="o">=</span> <span class="n">ev</span><span class="o">.</span><span class="n">listener</span>
+        <span class="n">listener</span><span class="o">.</span><span class="n">_per_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span>
+        <span class="k">return</span> <span class="n">listener</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_example_func</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">param_kinds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">kind</span><span class="p">],</span> <span class="n">param_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a dummy function with the specified parameter signature.</span>
+
+<span class="sd">        :param param_kinds: List of parameter kinds.</span>
+<span class="sd">        :param param_count: Number of parameters.</span>
+<span class="sd">        :return: Callable with matching signature.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">param_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">param_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">param_count</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">param_count</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># For more complex signatures, fall back to *args</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iadd__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;EventDescriptor&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subscribe a handler to the event.</span>
+
+<span class="sd">        :param handler: Callable to subscribe.</span>
+<span class="sd">        :return: Self for chaining.</span>
+<span class="sd">        :raises TypeError: If handler is not callable.</span>
+<span class="sd">        :raises AttributeError: If used incorrectly on class-level events.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">handler</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Handler must be callable, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Module-level usage</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ev</span><span class="p">,</span> <span class="n">_listener</span> <span class="o">=</span> <span class="n">Event</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_create_example_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_kinds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_count</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="o">=</span> <span class="n">ev</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="o">+=</span> <span class="n">handler</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="c1"># Class-level: must use instance.event_name += handler</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cannot subscribe to class event &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2">&#39; directly. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Use &#39;instance.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2"> += handler&#39; instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__isub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;EventDescriptor&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unsubscribe a handler from the event.</span>
+
+<span class="sd">        :param handler: Callable to unsubscribe.</span>
+<span class="sd">        :return: Self for chaining.</span>
+<span class="sd">        :raises TypeError: If handler is not callable.</span>
+<span class="sd">        :raises AttributeError: If used incorrectly on class-level events.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">handler</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Handler must be callable, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Module-level removal</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="o">-=</span> <span class="n">handler</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="c1"># Class-level: must use instance.event_name -= handler</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cannot unsubscribe from class event &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2">&#39; directly. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Use &#39;instance.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2"> -= handler&#39; instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_async_handlers_in_background</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handle async handlers in background with proper resource management.</span>
+
+<span class="sd">        :param event: Event instance to emit on.</span>
+<span class="sd">        :param args: Arguments for the event.</span>
+<span class="sd">        :param kwargs: Keyword arguments for the event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">async_handlers</span> <span class="o">=</span> <span class="p">[</span><span class="n">cb</span> <span class="k">for</span> <span class="n">cb</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">handlers</span> <span class="k">if</span> <span class="n">_is_async_callable</span><span class="p">(</span><span class="n">cb</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">async_handlers</span><span class="p">:</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">run_async</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">()</span>
+                    <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">emit_async</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+                    <span class="k">finally</span><span class="p">:</span>
+                        <span class="n">loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="c1"># Use the event&#39;s error handler for consistency</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s2">&quot;_error_handler&quot;</span><span class="p">):</span>
+                        <span class="n">event</span><span class="o">.</span><span class="n">_error_handler</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+            <span class="c1"># Use shared thread pool for better resource management</span>
+            <span class="n">_async_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">run_async</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EventDescriptor.emitter">
+<a class="viewcode-back" href="../../api.html#pyesys.prop.EventDescriptor.emitter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">emitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decorator for the emitter function.</span>
+<span class="sd">        Wraps fn so that after running its body, it fires the appropriate Event.</span>
+
+<span class="sd">        :param fn: Function to wrap as an emitter.</span>
+<span class="sd">        :return: Wrapped function that emits events after execution.</span>
+<span class="sd">        :raises TypeError: If fn is not callable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Emitter must be callable, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+
+            <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Async emitter wrapper that handles event emission after function execution.&quot;&quot;&quot;</span>
+                <span class="c1"># 1) Run original async body</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+                <span class="c1"># 2) Dispatch to event</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># Module-level: pass all args</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span><span class="o">.</span><span class="n">emit_async</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Class-level: pass args without sender to handlers</span>
+                    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># Ensure we have at least one argument (self)</span>
+                        <span class="n">inst</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">ev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">ev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="c1"># For class events, handlers get args minus self</span>
+                            <span class="k">await</span> <span class="n">ev</span><span class="o">.</span><span class="n">emit_async</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">result</span>
+
+            <span class="k">return</span> <span class="n">async_wrapped</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">sync_wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Sync emitter wrapper that handles event emission after function execution.&quot;&quot;&quot;</span>
+                <span class="c1"># 1) Run original sync body</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+                <span class="c1"># 2) Dispatch to event</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># Module-level: pass all args</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                        <span class="c1"># Handle async handlers in background</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_async_handlers_in_background</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_global_event</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Class-level: pass args without sender to handlers</span>
+                    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># Ensure we have at least one argument (self)</span>
+                        <span class="n">inst</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">ev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_instance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">ev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="c1"># For class events, handlers get args minus self</span>
+                            <span class="n">emit_args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                            <span class="n">ev</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="o">*</span><span class="n">emit_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                            <span class="c1"># Handle async handlers in background</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_async_handlers_in_background</span><span class="p">(</span>
+                                <span class="n">ev</span><span class="p">,</span> <span class="n">emit_args</span><span class="p">,</span> <span class="n">kwargs</span>
+                            <span class="p">)</span>
+
+                <span class="k">return</span> <span class="n">result</span>
+
+            <span class="k">return</span> <span class="n">sync_wrapped</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="event">
+<a class="viewcode-back" href="../../api.html#pyesys.prop.event">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">event</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">EventDescriptor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator to create a module-level or class-level event.</span>
+
+<span class="sd">    This unified decorator automatically handles both use cases:</span>
+<span class="sd">    - When used at module level: creates a global event</span>
+<span class="sd">    - When used in a class: creates per-instance events</span>
+
+<span class="sd">    Usage:</span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">        @event</span>
+<span class="sd">        def on_something(...):</span>
+<span class="sd">            &#39;&#39;&#39;Event signature definition&#39;&#39;&#39;</span>
+<span class="sd">            pass</span>
+
+<span class="sd">        @on_something.emitter</span>
+<span class="sd">        def do_action(...):</span>
+<span class="sd">            &#39;&#39;&#39;Action that triggers the event&#39;&#39;&#39;</span>
+<span class="sd">            # Your logic here</span>
+<span class="sd">            pass  # Event automatically emitted after this</span>
+
+<span class="sd">    In a class, this becomes a per-instance event; at module level,</span>
+<span class="sd">    it&#39;s a single global event.</span>
+
+<span class="sd">    :param func: Function defining the event signature.</span>
+<span class="sd">    :return: EventDescriptor that manages the event.</span>
+<span class="sd">    :raises TypeError: If func is not callable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">EventDescriptor</span><span class="p">(</span><span class="n">func</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Goodwill Mzumala.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
