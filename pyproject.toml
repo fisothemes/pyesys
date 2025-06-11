@@ -21,8 +21,9 @@ classifiers = [
 keywords = ["event", "pubsub", "async", "python"]
 
 [project.urls]
-Homepage = "https://github.com/fisothemes/pyesys"
-Issues   = "https://github.com/fisothemes/pyesys/issues"
+Source = "https://github.com/fisothemes/pyesys"
+Documentation = "https://fisothemes.github.io/pyesys/"
+Issues = "https://github.com/fisothemes/pyesys/issues"
 
 [project.optional-dependencies]
 ci_test = ["pytest>=8.3.5", "pytest-asyncio>=1.0.0"]
