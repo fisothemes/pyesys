@@ -5,8 +5,8 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "pyesys"
 version = "0.2.0"
-description = "An easy-to-use, robust, thread-safe, and type-safe event system for Python with comprehensive async support."
-readme = "README.md"
+description = "A Python-native event system that provides thread-safe, type-safe event handling with first-class async support. Designed for real-world applications requiring robust concurrency, simulation, or external control mechanisms."
+readme = "README.pypi.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
