@@ -3,392 +3,215 @@
 [![Test](https://github.com/fisothemes/pyesys/actions/workflows/test.yaml/badge.svg)](https://github.com/fisothemes/pyesys/actions/workflows/test.yaml)
 [![Python version](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/pyesys.svg)](https://pypi.org/project/pyesys/)
-[![Downloads](https://img.shields.io/pypi/dd/pyesys)](https://pypi.org/project/pyesys/)
+[![Downloads](https://img.shields.io/pypi/dd/pyesys)](https://pypistats.org/packages/pyesys)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
-**A thread-safe, type-safe Python Event SYStem with async support.**
+**A Python-native event system with thread-safe, type-safe event handling and first-class async support.**
 
-PyESys provides a lightweight, dependency-free event/pub-sub framework. It supports:
+PyESys brings clean, per-instance event handling to Python using familiar patterns like property descriptors and operator overloading. Perfect for real-time systems, simulations, and any application requiring robust event-driven architecture.
 
-* **Synchronous and asynchronous** handlers
-* **Thread-safe** subscribe/unsubscribe/emit
-* **Weak-reference clean-up** of bound-method handlers
-* **Runtime signature checking** (handler arity must match an example signature)
-* **Custom error handling** per handler
-* **Duplicate-subscription control**
-* **Introspection** (`handler_count`, `handlers`)
-* **Class-level and module-level events** with decorator syntax
+```python
+from pyesys import event
 
+class Button:
+    @event
+    def on_click(self):
+        """Click event signature"""
+    
+    @on_click.emitter
+    def click(self):
+        print("Button clicked!")
 
-## Table of Contents
+# Each instance gets its own events
+btn = Button()
+btn.on_click += lambda: print("Handler executed!")
+btn.click()
+# Output: Button clicked!
+#         Handler executed!
+```
 
-1. [Installation](#installation)
-2. [Quick Start](#quick-start)
+## Why PyESys?
 
-   * [Creating an Event with `create_event`](#creating-an-event-with-create_event)
-   * [Creating an Event Directly with `Event.new` or `Event`](#creating-an-event-directly-with-eventnew-or-event)
-   * [Subscribing & Emitting (Sync)](#subscribing--emitting-sync)
-   * [Subscribing & Emitting (Async)](#subscribing--emitting-async)
-   * [Subscribing Multiple Handlers at Once](#subscribing-multiple-handlers-at-once)
-   * [Class-Level & Module-Level Events with `@event`](#class-level--module-level-events-with-event)
-3. [API Overview](#api-overview)
+While Python has several event handling solutions, many common approaches present challenges for modern applications:
 
-   * [`EventHandler`](#eventhandler)
-   * [`Event`](#event)
-   * [`create_event`](#create_event)
-   * [`@event` Decorator](#event-decorator)
-4. [Testing](#testing)
-5. [Contributing](#contributing)
-6. [Licence](#licence)
+**Event Bus Patterns**: Many libraries use global event buses with string-based keys, which can create tight coupling and make per-instance event management complex. When each object instance needs its own events, you often need to manage ID strings or implement filtering logic.
 
+**Memory Management**: Event systems with bound methods can suffer from memory leaks if not carefully designed with weak references and proper cleanup mechanisms.
 
-## Installation
+**Async/Sync Integration**: Mixing synchronous and asynchronous event handlers consistently can be challenging, especially when you need both to coexist seamlessly.
 
-Requires **Python 3.12+**.
+PyESys addresses these architectural challenges with a clean, intuitive API:
 
-Install from PyPI:
+- **Per-Instance Events**: No global registries or string-based keys. Each object manages its own events independently.
+- **Type Safety**: Runtime signature validation catches handler mismatches early.
+- **Async-Ready**: Mix sync and async handlers seamlessly with automatic thread pool handling.
+- **Pythonic**: Familiar `@event` decorator syntax inspired by `@property`, plus `+=`/`-=` operators.
+- **Memory Safe**: Built-in weak references prevent common memory leak patterns.
+- **Thread Safe**: Safe concurrent event emission across multiple threads.
+
+## Quick Start
+
+### Installation
 
 ```bash
 pip install pyesys
 ```
 
-Or install in editable (development) mode:
+Requires Python 3.12+. Zero dependencies.
 
-```bash
-git clone https://github.com/fisothemes/pyesys.git
-cd pyesys
-pip install -e .[dev]
-```
-
-> The `[dev]` extra installs development-only dependencies (e.g., `pytest`, `pytest-asyncio`, `black`, `sphinx`).
-
-
-## Quick Start
-
-### Creating an Event with `create_event`
-
-Each event is defined by an “example” function whose signature specifies the required arguments. Use `create_event(...)` (or `Event.new(...)`) to create a new event:
+### Basic Usage
 
 ```python
-from pyesys.event import create_event
+from pyesys import create_event
 
-# Example function signature: (int, str) -> None
-event_obj, listener = create_event(example=lambda x, y: None)
+# Create event with signature validation
+event, listener = create_event(example=lambda msg: None)
+
+def log_message(msg: str):
+    print(f"[LOG] {msg}")
+
+# Subscribe and emit
+listener += log_message
+event.emit("Hello PyESys!")
+# Output: [LOG] Hello PyESys!
 ```
 
-* `event_obj` is the dispatcher (an instance of `Event`).
-* `listener` is an `Event.Listener` interface—use `listener += handler` to subscribe and `listener -= handler` to unsubscribe.
-
-If you prefer a named function:
+### Class-Based Events
 
 ```python
-def example_sig(a: int, b: str) -> None:
-    pass
+from pyesys import event
 
-event_obj, listener = create_event(example=example_sig)
+class FileProcessor:
+    @event
+    def on_progress(self, filename: str, percent: float):
+        """Progress update event"""
+    
+    @on_progress.emitter
+    def _update_progress(self, filename: str, percent: float):
+        pass  # Event automatically emitted
+    
+    def process(self, filename: str):
+        for i in range(0, 101, 25):
+            self._update_progress(filename, i)
+
+# Each processor has independent events
+processor = FileProcessor()
+processor.on_progress += lambda f, p: print(f"{f}: {p}% complete")
+
+processor.process("data.txt")
+# Output: data.txt: 0% complete
+#         data.txt: 25% complete
+#         ...
 ```
 
-### Creating an Event Directly with `Event.new` or `Event`
+## Advanced Features
 
-You may also instantiate an `Event` directly, which offers the same functionality. For instance:
+### Event Chaining
+
+Create processing pipelines by chaining events between objects:
 
 ```python
-from pyesys.event import Event
+class DataProcessor:
+    @event
+    def on_processed(self, data: dict):
+        pass
+    
+    @on_processed.emitter
+    def process(self, data: dict):
+        # Transform data
+        return {"processed": True, **data}
 
-def example_sig(a: int, b: str) -> None:
-    pass
+class DataValidator:
+    def validate(self, data: dict):
+        print(f"Validating: {data}")
 
-# Using Event.new() (alias for create_event):
-event_obj, listener = Event.new(example=example_sig)
+processor = DataProcessor()
+validator = DataValidator()
 
-# Equivalent direct instantiation:
-msg_event = Event(example=example_sig)
-
-# Create a handler:
-def on_message(a: int, b: str) -> None:
-    print(f"Got {a} and {b}")
-
-# Subscribe a handler:
-msg_event.listener += on_message
-
-# Emit:
-msg_event.emit(1, "hello")
-# prints: Got 1 and hello
+# Chain processors
+processor.on_processed += validator.validate
+processor.process({"id": 123})
 ```
 
-Here, `msg_event.Listener` is used to manage subscriptions, and `msg_event.emit(...)` dispatches to all subscribed handlers.
+### Async Support
 
-
-### Subscribing & Emitting (Sync)
-
-Handlers must accept the same parameters as the example and return `None`:
-
-```python
-def on_data(x: int, name: str) -> None:
-    print(f"Received: {x}, {name}")
-
-# Subscribe with +=
-listener += on_data
-
-# Emit synchronously (blocks until all handlers finish)
-event_obj.emit(42, "hello")  
-# prints: Received: 42, hello
-
-# Unsubscribe with -=
-listener -= on_data
-```
-
-**Duplicate-subscription control**
-By default, `allow_duplicates=True`, so adding the same handler twice invokes it twice on each `emit`. To prevent duplicates:
-
-```python
-event_obj, listener = create_event(example=lambda x: None, allow_duplicates=False)
-```
-
-
-### Subscribing & Emitting (Async)
-
-Call `emit_async(...)` to dispatch all handlers concurrently:
-
-1. **`async def` handlers** are awaited directly.
-2. **Sync handlers** run in a thread pool.
+Mix synchronous and asynchronous handlers effortlessly:
 
 ```python
 import asyncio
-from pyesys.event import create_event
 
-# Example signature: (int,) -> None
-event_obj, listener = create_event(example=lambda x: None)
-
-async def async_handler(v: int) -> None:
+async def async_handler(data):
     await asyncio.sleep(0.1)
-    print(f"Async got: {v}")
+    print(f"Async: {data}")
 
-def sync_handler(v: int) -> None:
-    print(f"Sync got: {v}")
+def sync_handler(data):
+    print(f"Sync: {data}")
 
-listener += async_handler
-listener += sync_handler
-
-async def main():
-    await event_obj.emit_async(10)
-    # prints in some order:
-    #   Sync got: 10
-    #   Async got: 10
-
-asyncio.run(main())
+listener += [sync_handler, async_handler]
+await event.emit_async("mixed-handlers")
+# Both handlers run concurrently
 ```
 
-If there are no handlers, `emit_async(...)` returns immediately without error.
+### Bulk Operations
 
-
-# Subscribing Multiple Handlers at Once
-
-You can subscribe multiple handlers at once using a `list`, `tuple`, or `set`:
+Efficiently manage multiple handlers:
 
 ```python
+# Bulk subscribe
 listener += [handler1, handler2, handler3]
-listener += (handler4, handler5)
-listener += {handler6, handler7, handler8} # Order is not guaranteed for sets
+
+# Bulk unsubscribe  
+listener -= {handler1, handler2}
+
+# Introspection
+print(f"Active handlers: {listener.handler_count()}")
 ```
 
-To unsubscribe multiple handlers in one step, use the same container type:
+### Production Error Handling
 
 ```python
-listener -= [handler1, handler2, handler3]
-listener -= (handler4, handler5)
-listener -= {handler6, handler7, handler8}
+def error_handler(exception, handler_func):
+    logger.error(f"Handler {handler_func.__name__} failed: {exception}")
+
+event, listener = create_event(
+    example=lambda x: None,
+    error_handler=error_handler
+)
+# Failing handlers won't crash the system
 ```
 
+## Real-World Use Cases
 
-### Class-Level & Module-Level Events with `@event`
-
-PyESys includes an `@event` decorator (in `pyesys.prop`) for defining events on classes or at module level. Each instance or module gets its own event, managed automatically:
-
-#### Class-level events
-
-```python
-from pyesys.prop import event
-
-# Class-level event (per-instance)
-class Button:
-    @event
-    def on_click(self):
-        """Event signature definition (no parameters besides self)."""
-        pass
-
-    @on_click.emitter
-    def click(self):
-        """This method is an emitter—after running, it fires `on_click`."""
-        print(f"Button {id(self)} was clicked!")
-
-class Counter:
-    def __init__(self):
-        self.count = 0
-
-    def increment(self):
-        """Signature matches `on_click` (no extra args)."""
-        self.count += 1
-        print(f"Count = {self.count}")
-
-# Usage
-counter = Counter()
-button = Button()
-
-# Subscribe the counter’s `increment` method to the button’s `on_click` event
-button.on_click += counter.increment
-
-# Trigger the emitter
-button.click()
-# prints: Button 140280689482800 was clicked!
-# prints: Count = 1
-```
-
-#### Module-level events
-
-```python
-# Module-level event (global)
-from pyesys.prop import event
-
-@event
-def on_global_event(message: str):
-    """Global event signature: handlers must accept a single str."""
-    pass
-
-@on_global_event.emitter
-def trigger_global(message: str):
-    """This function triggers the module-level event after running."""
-    print(f"Global: {message}")
-
-# Usage
-
-def global_handler(msg: str) -> None:
-    print(f"Handled globally: {msg}")
-
-on_global_event += global_handler
-trigger_global("Hello, world!")
-# prints: Global: Hello, world!
-# prints: Handled globally: Hello, world!
-```
-
-**Key features of `@event`:**
-
-* **Automatic signature detection**: Event signature is derived from the decorated function/method.
-* **Per-instance vs global**: Class methods create per-instance events; module functions create a single global event.
-* **Emitter decorator**: Use `@event_name.emitter` to define methods/functions that automatically fire the event after their body.
-* **Mixed sync/async support**: Both synchronous and asynchronous handlers are supported seamlessly.
-* **Thread safety**: Async handlers are dispatched in a background thread when emitted from a sync context.
-
+- **Real-time Systems**: React to sensor inputs and control signals
+- **Simulation Frameworks**: Decouple models from visualization/control  
+- **Plugin Architectures**: Extend applications safely with event hooks
+- **UI/Backend Integration**: Bridge sync and async worlds seamlessly
+- **Testable Systems**: Replace complex callbacks with observable events
 
 ## API Overview
 
-### `EventHandler`
+### Core Functions
 
-Located in `pyesys.handler`. Wraps a callable handler to:
+#### `create_event(example, *, allow_duplicates=True, error_handler=None)`
 
-* Detect bound methods vs. free functions
-* Store a **weak reference** to the instance (for bound methods)
-* Provide `is_alive()` to check if the instance is still alive
-* Implement `__eq__` / `__hash__` so duplicate detection works correctly
-* Expose `get_callback()` to reconstruct a live callable
-
-Most users will **not** instantiate `EventHandler` directly; it’s used internally by `Event`.
-
-
-### `Event`
-
-Located in `pyesys.event`. Core class that manages subscriptions and dispatch:
+Creates an event emitter and listener pair with signature validation:
 
 ```python
-class Event:
-    def __init__(
-        self,
-        *,
-        allow_duplicates: bool = True,
-        error_handler: Optional[ErrorHandler] = None
-    ):
-        ...
-```
+from pyesys import create_event
 
-* **Constructor arguments**:
-
-  * `allow_duplicates`: If `False`, the same handler won’t be added twice.
-  * `error_handler`: A callable `(exception, handler)` used when any handler raises.
-
-#### Core methods & properties
-
-* `Listener` (an `Event.Listener`):
-
-  * Subscribe with `Listener += handler`
-  * Unsubscribe with `Listener -= handler`
-  * Query with `Listener.handler_count()`
-
-* `emit(*args, **kwargs)`
-
-  * Synchronously invoke all live handlers under a lock.
-  * Exceptions in each handler are routed to `error_handler` without stopping other handlers.
-  * Async handlers (coroutines) returned in sync emit are silently closed (ignored).
-
-* `async emit_async(*args, **kwargs)`
-
-  * Dispatch all handlers concurrently:
-
-    1. **`async def` handlers** are awaited.
-    2. **Sync handlers** run via `loop.run_in_executor`.
-  * All exceptions are caught and passed to `error_handler`.
-
-* `clear()`
-
-  * Remove all handlers (dropping subscriptions).
-
-* `handler_count()` (method)
-
-  * Returns the number of currently alive handlers, pruning any dead bound methods.
-
-* `handlers` (property)
-
-  * Returns a **list** of live callables (reconstructed via `EventHandler.get_callback()`).
-  * Mutating this returned list does **not** affect the internal state.
-
-* `__bool__()` / `__len__()`
-
-  * Boolean truth is `True` if there is at least one live handler.
-  * `len(event_obj)` returns `handler_count()`.
-
-* `new(example, *, allow_duplicates, error_handler) → (Event, Event.Listener)`
-
-  * Factory method (alias: `create_event`).
-  * Example usage:
-
-    ```python
-    event_obj, listener = Event.new(
-        example = lambda x, y: None,
-        allow_duplicates = False,
-        error_handler = custom_handler
-    )
-    ```
-
-
-### `create_event`
-
-A convenience alias for `Event.new(...)`. Import from:
-
-```python
-from pyesys.event import create_event
-
-event_obj, listener = create_event(
-    example = lambda a, b: None,
-    allow_duplicates = True
+event, listener = create_event(
+    example=lambda x, y: None,  # Handler signature template
+    allow_duplicates=False,     # Prevent duplicate subscriptions
+    error_handler=custom_handler  # Handle exceptions gracefully
 )
 ```
 
+#### `@event` Decorator
 
-### `@event` Decorator
-
-Located in `pyesys.prop`. Creates class-level or module-level events using decorator syntax:
+Creates class-level or module-level events using familiar decorator syntax:
 
 ```python
-from pyesys.prop import event
+from pyesys import event
 
 # Class-level event (per-instance)
 class MyClass:
@@ -414,12 +237,87 @@ def trigger_global(message: str):
     print(f"Global: {message}")
 ```
 
-* **Automatic signature detection**: Event signature is derived from the decorated function/method.
-* **Per-instance vs global**: Class methods create per-instance events; module functions create a single global event.
-* **Emitter decorator**: Use `@event_name.emitter` to define methods/functions that automatically fire the event after their body.
-* **Mixed sync/async support**: Both synchronous and asynchronous handlers are supported seamlessly.
-* **Thread safety**: Async handlers are dispatched in a background thread when emitted from a sync context.
+### Event Class
 
+The `Event` class provides the core event management functionality:
+
+**Subscription Management:**
+- `event += handler` - Subscribe directly to event
+- `event -= handler` - Unsubscribe directly from event
+- `listener += handler` - Subscribe via listener interface
+- `listener -= handler` - Unsubscribe via listener interface
+- `event += [h1, h2, h3]` - Bulk subscribe
+- `event.clear()` - Remove all handlers
+
+**Event Emission:**
+- `event.emit(*args, **kwargs)` - Synchronous emission
+- `await event.emit_async(*args, **kwargs)` - Asynchronous emission
+
+**Introspection:**
+- `event.handler_count()` - Number of active handlers
+- `event.handlers` - List of current handlers
+- `bool(event)` - True if handlers exist
+- `len(event)` - Same as handler_count()
+
+### Key Features
+
+**Type Safety**: Runtime signature validation through example functions ensures handlers match expected signatures, catching errors early.
+
+**Memory Management**: Automatic weak reference handling for bound methods prevents memory leaks without requiring manual cleanup.
+
+**Thread Safety**: All operations are thread-safe, allowing safe concurrent access from multiple threads.
+
+**Async Integration**: Seamlessly mix sync and async handlers. Async handlers run concurrently, sync handlers run in thread pools during async emission.
+
+**Error Resilience**: Custom error handlers prevent one failing handler from affecting others, crucial for production systems.
+
+## Alternative Usage Patterns
+
+### Direct Event Instantiation
+
+For more control, instantiate events directly:
+
+```python
+from pyesys.event import Event
+
+def example_sig(a: int, b: str) -> None:
+    pass
+
+msg_event = Event(example=example_sig)
+
+def on_message(a: int, b: str) -> None:
+    print(f"Got {a} and {b}")
+
+# Subscribe directly to the event
+msg_event += on_message
+msg_event.emit(1, "hello")
+
+# Or use the listener interface
+msg_event.listener += on_message
+```
+
+### Module-Level Events
+
+Create application-wide events at module level:
+
+```python
+from pyesys import event
+
+@event
+def on_user_login(user_id: str, timestamp: float) -> None:
+    """Fired when a user successfully logs in"""
+
+@on_user_login.emitter
+def login_user(user_id: str, timestamp: float) -> None:
+    """Authenticate user and emit login event"""
+    print(f"User {user_id} authenticated at {timestamp}")
+
+# Subscribe to login events
+def update_last_seen(user_id: str, timestamp: float):
+    print(f"Updating last seen for {user_id}")
+
+on_user_login += update_last_seen
+```
 
 ## Testing
 
@@ -432,27 +330,29 @@ pytest -q
 
 Test files live under `tests/`:
 
-* `tests/unit/test_handler.py` – tests for `EventHandler`
-* `tests/unit/test_event.py` – tests for `Event` (sync & async)
-* `tests/unit/test_prop.py` – tests for the `@event` decorator
-* `tests/integration/test_pyesys_end_to_end.py` – end-to-end integration tests
+- `tests/unit/test_handler.py` – tests for `EventHandler`
+- `tests/unit/test_event.py` – tests for `Event` (sync & async)
+- `tests/unit/test_prop.py` – tests for the `@event` decorator
+- `tests/integration/test_pyesys_end_to_end.py` – end-to-end integration tests
 
 All tests must pass before merging any changes.
-
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on:
 
-* Setting up a development environment
-* Branching and workflow conventions
-* Coding style & formatting (PEP 8, Black, type hints)
-* Writing tests and running them
-* Submitting pull requests
+- Setting up a development environment
+- Branching and workflow conventions
+- Coding style & formatting (PEP 8, Black, type hints)
+- Writing tests and running them
+- Submitting pull requests
 
+## Documentation
 
-## Licence
+- **📖 [Full Documentation](https://fisothemes.github.io/pyesys/)**
+- **🐛 [Issue Tracker](https://github.com/fisothemes/pyesys/issues)**
+- **📋 [Examples](./examples/)**
 
-This project is licenced under the **MIT Licence**. See [LICENSE](LICENSE) for details.
+---
 
-© 2025 Goodwill Mzumala
+*PyESys - Pythonic events for modern applications* 🐍✨
