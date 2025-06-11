@@ -5,7 +5,6 @@ on:
     branches:
       - master
       - develop
-      - chore/create-docs-page
 
 permissions:
   contents: write
