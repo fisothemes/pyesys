@@ -46,8 +46,9 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#why-pyesys">Why PyESys?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design-approach">Design Approach</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#goals">Goals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#use-cases">Use Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-use-cases">Key Use Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#design-philosophy">Design Philosophy</a></li>
 </ul>
 </li>
@@ -81,54 +82,114 @@
              
   <section id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
-<p><strong>PyESys</strong> is a Python-native, thread-safe, type-safe event system designed to feel intuitive in real-world applications — especially those involving concurrency, simulation, or external control.</p>
+<p><strong>PyESys</strong> is a Python-native event system that provides thread-safe, type-safe event handling with first-class async support. Designed for real-world applications requiring robust concurrency, simulation, or external control mechanisms.</p>
+<p><strong>Basic Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyesys</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_event</span>
+
+<span class="c1"># Define event signature</span>
+<span class="n">event</span><span class="p">,</span> <span class="n">listener</span> <span class="o">=</span> <span class="n">create_event</span><span class="p">(</span><span class="n">example</span><span class="o">=</span><span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># Define handler</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_message</span><span class="p">(</span><span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Message received: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Subscribe handler</span>
+<span class="n">listener</span> <span class="o">+=</span> <span class="n">log_message</span>
+
+<span class="c1"># Emit event</span>
+<span class="n">event</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="s2">&quot;Hello PyESys!&quot;</span><span class="p">)</span>
+<span class="c1"># Output: Message received: Hello PyESys!</span>
+</pre></div>
+</div>
+<p><strong>Decorator Example</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyesys.prop</span><span class="w"> </span><span class="kn">import</span> <span class="n">event</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Button</span><span class="p">:</span>
+    <span class="nd">@event</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_click</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Click event signature&quot;&quot;&quot;</span>
+
+    <span class="nd">@on_click</span><span class="o">.</span><span class="n">emitter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">click</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Automatically emits after execution&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Button pressed!&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">handle_click</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Action performed!&quot;</span><span class="p">)</span>
+
+<span class="n">btn</span> <span class="o">=</span> <span class="n">Button</span><span class="p">()</span>
+<span class="n">btn</span><span class="o">.</span><span class="n">on_click</span> <span class="o">+=</span> <span class="n">handle_click</span>
+<span class="n">btn</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
+<span class="c1"># Output:</span>
+<span class="c1">#   Button pressed!</span>
+<span class="c1">#   Action performed!</span>
+</pre></div>
+</div>
 <hr class="docutils" />
 <section id="why-pyesys">
 <h2>Why PyESys?<a class="headerlink" href="#why-pyesys" title="Link to this heading"></a></h2>
-<p>While Python lacks a built-in observer pattern, many third-party libraries exist — but most feel <strong>foreign to the language</strong>. They often:</p>
+<p>While Python has several event handling solutions, many common approaches present challenges for modern applications:</p>
+<p><strong>Event Bus Patterns</strong>: Many libraries use global event buses with string-based keys, which can create tight coupling and make per-instance event management complex. When each object instance needs its own events, you often need to manage ID strings or implement filtering logic, leading to unnecessary event triggers across unrelated instances.</p>
+<p><strong>Memory Management</strong>: Event systems with bound methods can suffer from memory leaks if not carefully designed with weak references and proper cleanup mechanisms.</p>
+<p><strong>Async/Sync Integration</strong>: Mixing synchronous and asynchronous event handlers consistently can be challenging, especially when you need both to coexist seamlessly.</p>
+<p><strong>Pythonic Design</strong>: Many event systems don’t leverage familiar Python patterns, making them feel foreign compared to built-in language features like property descriptors.</p>
+<p>PyESys addresses these architectural challenges with a clean, intuitive API:</p>
+<p>&gt; <em>“When controlling real-time systems, I needed clean event handling that works seamlessly across threads and async contexts while feeling natural to Python developers.”</em></p>
+</section>
+<hr class="docutils" />
+<section id="design-approach">
+<h2>Design Approach<a class="headerlink" href="#design-approach" title="Link to this heading"></a></h2>
+<p>PyESys draws inspiration from familiar Python patterns:</p>
 <ul class="simple">
-<li><p>Depend on <strong>string-based global keys</strong> for event names</p></li>
-<li><p>Use <strong>shared registries</strong> that introduce tight coupling</p></li>
-<li><p>Are <strong>awkward</strong> to manage per-instance behaviour</p></li>
-<li><p>Handle <strong>async vs sync inconsistently</strong></p></li>
-<li><p>Leak memory when managing bound methods</p></li>
-<li><p>Feel nothing like Python or .NET’s event model</p></li>
+<li><p><strong>Property-like syntax</strong>: The <cite>&#64;event</cite> decorator mirrors Python’s <cite>&#64;property</cite> descriptor pattern, making it instantly familiar</p></li>
+<li><p><strong>Operator overloading</strong>: Uses <cite>+=</cite> (subscribe) and <cite>-=</cite> (unsubscribe) following Python’s established conventions</p></li>
+<li><p><strong>Per-instance events</strong>: Each object gets its own event instances, eliminating global state and cross-instance interference</p></li>
+<li><p><strong>Type safety</strong>: Runtime signature validation through example functions</p></li>
+<li><p><strong>Memory conscious</strong>: Built-in weak reference handling prevents common memory leak patterns</p></li>
 </ul>
-<p>PyESys was born from practical needs:</p>
-<p>&gt; “I was modelling and controlling a plant in real time (in its own thread/process), and I wanted a clean way to control it via external events. The existing solutions felt clunky or unfamiliar.”</p>
 </section>
 <hr class="docutils" />
 <section id="goals">
 <h2>Goals<a class="headerlink" href="#goals" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><strong>Per-instance events</strong> by default — no more global keys</p></li>
-<li><p>Seamless <strong>sync + async</strong> support (handlers, emitters)</p></li>
-<li><p>Automatic <strong>weak-reference clean-up</strong> for bound methods</p></li>
-<li><p>Familiar model similar to <strong>.NET events</strong></p></li>
-<li><p>Built to “just work” — no magic registries or ceremony</p></li>
-<li><p>Thread-safe emission and subscription</p></li>
-<li><p>Minimal memory management burden</p></li>
+<li><p><strong>Intuitive syntax</strong> leveraging familiar Python patterns</p></li>
+<li><p><strong>True per-instance events</strong> without global registries or string-based dispatch</p></li>
+<li><p><strong>Seamless sync/async interoperability</strong></p></li>
+<li><p><strong>Automatic memory management</strong> for bound methods</p></li>
+<li><p><strong>Zero dependencies</strong> with pure Python implementation</p></li>
+<li><p><strong>Runtime signature validation</strong> for type safety</p></li>
+<li><p><strong>Thread-safe by design</strong></p></li>
 </ul>
 </section>
 <hr class="docutils" />
-<section id="use-cases">
-<h2>Use Cases<a class="headerlink" href="#use-cases" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p>Controlling long-running simulations from a UI or script</p></li>
-<li><p>Reacting to real-time data (sensor inputs, model outputs)</p></li>
-<li><p>Building testable, decoupled modules</p></li>
-<li><p>Replacing <cite>Observer</cite>/<cite>Signal</cite> constructs in Pythonic codebases</p></li>
-<li><p>Integrating <cite>.NET-style</cite> event patterns in scientific and industrial tooling</p></li>
-</ul>
+<section id="key-use-cases">
+<h2>Key Use Cases<a class="headerlink" href="#key-use-cases" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Real-time systems</strong>
+React to sensor inputs/control signals</p></li>
+<li><p><strong>Simulation frameworks</strong>
+Decouple models from visualization/control</p></li>
+<li><p><strong>Plugin architectures</strong>
+Extend core functionality safely</p></li>
+<li><p><strong>UI/backend integration</strong>
+Bridge synchronous and asynchronous worlds</p></li>
+<li><p><strong>Testable systems</strong>
+Replace complex callbacks with observable events</p></li>
+</ol>
 </section>
 <hr class="docutils" />
 <section id="design-philosophy">
 <h2>Design Philosophy<a class="headerlink" href="#design-philosophy" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><strong>Explicit signatures</strong> — handler arity is enforced by example</p></li>
-<li><p><strong>Clean semantics</strong> — events feel like properties with <cite>+=</cite> and <cite>-=</cite> syntax</p></li>
-<li><p><strong>Thread &amp; coroutine friendly</strong> — safe in all contexts</p></li>
-<li><p><strong>Composable and modular</strong> — no central broker required</p></li>
+<li><p><strong>Explicit over implicit</strong>
+Handler signatures enforced via example functions</p></li>
+<li><p><strong>Pythonic first</strong>
+Leverages familiar language patterns like descriptors and operator overloading</p></li>
+<li><p><strong>Concurrency-ready</strong>
+Thread-safe emission with async support</p></li>
+<li><p><strong>Resource-conscious</strong>
+Weak references prevent memory leaks</p></li>
+<li><p><strong>Composable</strong>
+Events work standalone or in complex systems</p></li>
 </ul>
 </section>
 </section>
