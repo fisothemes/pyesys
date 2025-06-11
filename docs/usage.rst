@@ -1,240 +1,446 @@
 Usage Guide
 ===========
 
-This guide shows how to use PyESys to:
+This guide demonstrates how to leverage PyESys for effective event-driven programming:
 
-- Create and emit events
-- Subscribe sync or async handlers
-- Use `@event` decorators (class/module level)
-- Bulk subscribe/unsubscribe
-- Chain events
-- Handle errors safely
+- Create and emit events with type safety
+- Subscribe synchronous and asynchronous handlers
+- Use `@event` decorators for clean API design
+- Manage handler lifecycles efficiently
+- Chain events for complex workflows
+- Handle errors gracefully in production
 
 ----
 
 Installation
 ------------
 
-PyESys requires Python 3.12+.
+PyESys requires Python 3.12+ and has zero external dependencies.
 
 .. code-block:: bash
 
-   pip install pyesys
+    pip install pyesys
 
-Or for local development:
+For local development with testing tools:
 
 .. code-block:: bash
 
-   git clone https://github.com/fisothemes/pyesys.git
-   cd pyesys
-   pip install -e .[dev]
+    git clone https://github.com/fisothemes/pyesys.git
+    cd pyesys
+    pip install -e .[dev]
 
 ----
 
-Creating and Emitting Events
+Quick Start: Creating Events
 ----------------------------
 
-Use `create_event(...)` with a sample function that defines the expected handler signature:
+The `create_event()` function creates an event emitter and listener pair. Use an example function to define the expected handler signature:
 
 .. code-block:: python
 
-   from pyesys import create_event
+    from pyesys import create_event
 
-   event, listener = create_event(example=lambda x: None)
+    # Create event with signature validation
+    event, listener = create_event(example=lambda msg: None)
 
-   def handler(x):
-       print("Handled:", x)
+    def log_message(msg: str):
+        print(f"[LOG] {msg}")
 
-   listener += handler
-   event.emit(42)
+    def store_message(msg: str):
+        # Store to database, file, etc.
+        pass
 
-Here, any handler must accept one argument. The event runs all subscribed handlers safely when `emit(...)` is called.
+    # Subscribe handlers
+    listener += log_message
+    listener += store_message
+
+    # Emit to all subscribers
+    event.emit("System started successfully")
+
+The example function enforces that all handlers must accept exactly one parameter. This catches signature mismatches at subscription time, preventing runtime errors.
 
 ----
 
-Using `@event` at Module Level
-------------------------------
+Decorator Pattern: Module-Level Events
+--------------------------------------
 
-You can define reusable global events using `@event`:
+For application-wide events, use the `@event` decorator at module level to create clean, reusable event APIs:
 
 .. code-block:: python
 
-   from pyesys import event
+    from pyesys import event
 
-   @event
-   def on_hello(name: str) -> None: ...
+    @event
+    def on_user_login(user_id: str, timestamp: float) -> None:
+        """Fired when a user successfully logs in"""
 
-   @on_hello.emitter
-   def hello(name: str) -> None:
-       print(f"Saying hello to {name}...")
+    @on_user_login.emitter
+    def login_user(user_id: str, timestamp: float) -> None:
+        """Authenticate user and emit login event"""
+        # Perform authentication logic here
+        print(f"User {user_id} authenticated at {timestamp}")
+        # Event automatically emitted after function completes
 
-   def handler(name: str) -> None:
-       print(f"Received hello event for {name}.")
+    # Subscribe to login events
+    def update_last_seen(user_id: str, timestamp: float):
+        print(f"Updating last seen for {user_id}")
 
-   on_hello += handler
-   hello("World")
+    def log_access(user_id: str, timestamp: float):
+        print(f"Access logged: {user_id} at {timestamp}")
 
-This sets up a global event `on_hello`, whose emitter `hello()` runs the body, then automatically fires all subscribed handlers with the same arguments.
+    on_user_login += [update_last_seen, log_access]
+
+    # Trigger authentication and event
+    import time
+    login_user("alice", time.time())
+
+
+The `@event` decorator creates a module-level event, while `@on_user_login.emitter` creates a function that automatically emits the event after executing its body.
 
 ----
 
-Using `@event` at Class Level
------------------------------
+Decorator Pattern: Per-Instance Events
+--------------------------------------
 
-Class-level events are **per instance**, like `.NET` or GUI frameworks:
+Class-level events provide per-instance isolation, perfect for component-based architectures:
 
 .. code-block:: python
 
-   from pyesys import event
+    from pyesys import event
 
-   class Button:
-       @event
-       def on_click(self): ...
+    class FileProcessor:
+        @event
+        def on_progress(self, filename: str, percent: float) -> None:
+            """Progress update event"""
+        
+        @event
+        def on_complete(self, filename: str, result: dict) -> None:
+            """Processing complete event"""
+        
+        @on_progress.emitter
+        def _update_progress(self, filename: str, percent: float):
+            """Internal progress updater"""
+            pass  # Event emitted automatically
+        
+        @on_complete.emitter
+        def _finish_processing(self, filename: str, result: dict):
+            """Internal completion handler"""
+            pass  # Event emitted automatically
+        
+        def process_file(self, filename: str):
+            print(f"Starting processing: {filename}")
+            
+            # Simulate processing with progress updates
+            for i in range(0, 101, 25):
+                self._update_progress(filename, i)
+            
+            result = {"status": "success", "lines": 1000}
+            self._finish_processing(filename, result)
 
-       @on_click.emitter
-       def click(self):
-           print("Button clicked!")
+    # Each processor instance has independent events
+    processor1 = FileProcessor()
+    processor2 = FileProcessor()
 
-   b = Button()
-   b.on_click += lambda: print("Handler called!")
-   b.click()
+    # Subscribe different handlers to each instance
+    processor1.on_progress += lambda f, p: print(f"P1: {f} at {p}%")
+    processor2.on_progress += lambda f, p: print(f"P2: {f} at {p}%")
 
-Each `Button` instance gets its own `on_click` event. The `click()` method prints a message and then automatically triggers the event.
+    processor1.process_file("data1.txt")
+    processor2.process_file("data2.txt")
+
+Each `FileProcessor` instance maintains its own event handlers, preventing cross-instance interference.
 
 ----
 
-Bulk Subscribe and Unsubscribe
-------------------------------
+Efficient Handler Management
+----------------------------
 
-You can add/remove multiple handlers at once using lists, sets, or tuples:
+PyESys supports bulk operations for managing multiple handlers efficiently:
 
 .. code-block:: python
 
-   def a(x): ...
-   def b(x): ...
-   def c(x): ...
+    from pyesys import create_event
 
-   listener += [a, b, c]     # Add all
-   listener -= {a, b}        # Remove some
+    event, listener = create_event(example=lambda data: None)
 
-This makes it easy to bind or unbind groups of related callbacks without looping.
+    def handler_a(data): print("A:", data)
+    def handler_b(data): print("B:", data) 
+    def handler_c(data): print("C:", data)
+    def handler_d(data): print("D:", data)
+
+    # Bulk subscribe using collections
+    listener += [handler_a, handler_b, handler_c]
+    listener += {handler_d}  # Sets work too
+
+    print(f"Active handlers: {listener.handler_count()}")  # 4
+
+    # Bulk unsubscribe
+    listener -= [handler_a, handler_c]
+    print(f"Remaining handlers: {listener.handler_count()}")  # 2
+
+    # Clear all handlers
+    event.clear()
+    print(f"After clear: {listener.handler_count()}")  # 0
+
+This pattern is especially useful for plugin systems or dynamic handler registration scenarios.
 
 ----
 
-Chaining Events Across Instances
---------------------------------
+Event Chaining and Workflows
+----------------------------
 
-You can chain events from one class to another, great for pipelines or steps:
+Chain events between objects to create flexible processing pipelines:
 
 .. code-block:: python
 
-   from pyesys import event
-   from abc import ABC
+    from pyesys import event
+    from abc import ABC
+    import json
 
-   class Step(ABC):
-       @event
-       def on_done(self, data): ...
+    class DataProcessor(ABC):
+        @event
+        def on_processed(self, data: dict, metadata: dict) -> None:
+            """Emitted when processing completes"""
+        
+        @on_processed.emitter
+        def _emit_processed(self, data: dict, metadata: dict):
+            """Internal method to emit processing event"""
+            pass
 
-       @on_done.emitter
-       def done(self, data=None): ...
+    class JsonParser(DataProcessor):
+        def process(self, raw_data: str):
+            print("Parsing JSON...")
+            try:
+                data = json.loads(raw_data)
+                metadata = {"parser": "json", "status": "success"}
+            except json.JSONDecodeError:
+                data = {}
+                metadata = {"parser": "json", "status": "error"}
+            
+            self._emit_processed(data, metadata)
 
-   class StepOne(Step):
-       def run(self, data=None):
-           print("Step 1: Doing work...")
-           self.done("data-from-step-1")
+    class DataValidator(DataProcessor):
+        def validate(self, data: dict, metadata: dict):
+            print(f"Validating data (previous: {metadata['status']})...")
+            
+            if metadata["status"] == "error":
+                metadata["validator"] = "skipped"
+            else:
+                # Perform validation
+                is_valid = "name" in data and "id" in data
+                metadata["validator"] = "passed" if is_valid else "failed"
+            
+            self._emit_processed(data, metadata)
 
-   class StepTwo(Step):
-       def run(self, input_data: str):
-           print(f"Step 2: Received '{input_data}', doing more work...")
-           self.done("result-from-step-2")
+    class DataStore(DataProcessor):
+        def store(self, data: dict, metadata: dict):
+            print(f"Storing data (validation: {metadata.get('validator', 'none')})...")
+            
+            if metadata.get("validator") == "passed":
+                print(f"✓ Stored: {data}")
+                metadata["storage"] = "success"
+            else:
+                print("✗ Storage skipped due to validation failure")
+                metadata["storage"] = "skipped"
+            
+            self._emit_processed(data, metadata)
 
-   class StepThree(Step):
-       def run(self, result: str):
-           print(f"Step 3: Finalising with result '{result}'")
-           self.done()
+    # Create pipeline
+    parser = JsonParser()
+    validator = DataValidator()
+    store = DataStore()
 
-   s1, s2, s3 = StepOne(), StepTwo(), StepThree()
+    # Chain the processors
+    parser.on_processed += validator.validate
+    validator.on_processed += store.store
 
-   s1.on_done += s2.run
-   s2.on_done += s3.run
+    # Final result handler
+    def log_final_result(data: dict, metadata: dict):
+        print(f"Pipeline complete: {metadata}")
 
-   s1.run()
+    store.on_processed += log_final_result
 
-**What happens**:
-1. `s1.run()` emits `"data-from-step-1"`
-2. `s2.run(...)` receives it, does work, emits its result
-3. `s3.run(...)` gets the final result
+    # Process data through the pipeline
+    parser.process('{"name": "Alice", "id": 123}')
+    print("---")
+    parser.process('{"invalid": json}')
 
-This pattern models pipelines, workflows, and signal propagation.
+This pattern enables flexible, testable processing chains where each component can be developed and tested independently.
 
 ----
 
-Async Handlers with `emit_async`
---------------------------------
+Asynchronous Event Handling
+---------------------------
 
-Mix sync and async handlers freely. Use `emit_async()` to await all:
+PyESys seamlessly handles mixed sync/async handlers, running them concurrently when possible:
 
 .. code-block:: python
 
-   import asyncio
+    import asyncio
+    import time
+    from pyesys import create_event
 
-   async def async_handler(x):
-       await asyncio.sleep(0.1)
-       print("async", x)
+    event, listener = create_event(example=lambda data: None)
 
-   def sync_handler(x):
-       print("sync", x)
+    def sync_handler(data):
+        """Synchronous handler - runs in thread pool"""
+        print(f"Sync processing: {data}")
+        time.sleep(0.1)  # Simulate work
+        print(f"Sync complete: {data}")
 
-   listener += [sync_handler, async_handler]
-   asyncio.run(event.emit_async(5))
+    async def async_handler(data):
+        """Asynchronous handler - runs in event loop"""  
+        print(f"Async processing: {data}")
+        await asyncio.sleep(0.1)  # Simulate async work
+        print(f"Async complete: {data}")
 
-Sync handlers run in a thread pool. Async ones are awaited properly. This is safe and parallel by design.
+    async def slow_async_handler(data):
+        """Another async handler with different timing"""
+        await asyncio.sleep(0.2)
+        print(f"Slow async complete: {data}")
+
+    # Subscribe mixed handler types
+    listener += [sync_handler, async_handler, slow_async_handler]
+
+    async def main():
+        print("Emitting to mixed handlers...")
+        await event.emit_async("test-data")
+        print("All handlers completed")
+
+    # Run the async event
+    asyncio.run(main())
+
+The `emit_async()` method ensures all handlers complete before returning, with sync handlers running in a thread pool to avoid blocking the event loop.
 
 ----
 
-Custom Error Handling
----------------------
+Production Error Handling
+-------------------------
 
-Define your own handler for exceptions raised by subscribers:
+Implement robust error handling to prevent one failing handler from affecting others:
 
 .. code-block:: python
 
-   def custom_handler(exc, handler):
-       print(f"ERROR: {handler} raised {exc}")
+    from pyesys import create_event
+    import logging
 
-   event, listener = create_event(
-       example=lambda x: None,
-       error_handler=custom_handler
-   )
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-   def bad(x): raise RuntimeError("fail")
-   listener += bad
-   event.emit(10)
+    def production_error_handler(exception: Exception, handler_func):
+        """Custom error handler for production use"""
+        logger.error(
+            f"Event handler {handler_func.__name__} failed: {exception}",
+            exc_info=True
+        )
+        
+        # Could also:
+        # - Send to error tracking service
+        # - Increment failure metrics
+        # - Disable repeatedly failing handlers
 
-The event will still run remaining handlers. By default, errors are printed to `stderr`.
+    # Create event with custom error handling
+    event, listener = create_event(
+        example=lambda x: None,
+        error_handler=production_error_handler
+    )
+
+    def reliable_handler(x):
+        print(f"Reliable handler: {x}")
+
+    def unreliable_handler(x):
+        if x == "trigger_error":
+            raise ValueError("Something went wrong!")
+        print(f"Unreliable handler: {x}")
+
+    def another_handler(x):
+        print(f"Another handler: {x}")
+
+    listener += [reliable_handler, unreliable_handler, another_handler]
+
+    # Test error handling
+    event.emit("normal_data")      # All handlers run
+    print("---")
+    event.emit("trigger_error")    # unreliable_handler fails, others continue
+
+Custom error handlers allow you to integrate with your monitoring and logging infrastructure while ensuring system resilience.
 
 ----
 
-Clearing and Introspection
---------------------------
+Debugging and Introspection
+---------------------------
 
-You can query or clear handlers any time:
+PyESys provides tools for debugging and monitoring event handler state:
 
 .. code-block:: python
 
-   print(listener.handler_count())  # active handlers
-   for h in event.handlers:
-       print(h)
+    from pyesys import create_event
 
-   event.clear()
-   assert listener.handler_count() == 0
+    event, listener = create_event(example=lambda x: None)
+
+    def handler_one(x): pass
+    def handler_two(x): pass
+
+    listener += [handler_one, handler_two]
+
+    # Inspect current handlers
+    print(f"Handler count: {listener.handler_count()}")
+
+    print("\nActive handlers:")
+    for i, handler in enumerate(event.handlers):
+        print(f"  {i}: {handler}")
+
+    # Check if specific handler is subscribed
+    is_subscribed = any(h == handler_one for h in event.handlers)
+    print(f"\nhandler_one subscribed: {is_subscribed}")
+
+    # Remove specific handler
+    listener -= handler_one
+    print(f"After removal: {listener.handler_count()}")
+
+These introspection capabilities are valuable for debugging complex event-driven systems and ensuring proper handler lifecycle management.
+
+----
+
+Best Practices
+--------------
+
+**Type Safety**: Always use descriptive example functions that match your handler signatures:
+
+.. code-block:: python
+
+    # Good: Clear signature
+    event, listener = create_event(
+        example=lambda user_id: str, action: str, timestamp: float: None
+    )
+
+    # Avoid: Vague signatures  
+    event, listener = create_event(example=lambda *args: None)
+
+**Memory Management**: PyESys uses weak references automatically, but be mindful of handler lifecycles:
+
+.. code-block:: python
+
+    class EventHandler:
+        def handle_event(self, data):
+            print(f"Handling: {data}")
+
+    # Handler will be garbage collected when 'handler' goes out of scope
+    handler = EventHandler()
+    listener += handler.handle_event
+
+    # Keep reference if handler needs to persist
+    self.persistent_handler = EventHandler()
+    listener += self.persistent_handler.handle_event
+
+**Error Resilience**: Always implement custom error handlers in production systems to prevent cascading failures.
 
 ----
 
 More Examples
 -------------
 
-You can find more complete usage examples in the GitHub repository:
-
-🔗 https://github.com/fisothemes/pyesys/tree/master/examples
-
+Find complete working examples and advanced patterns in the GitHub repository: 
+    
+    - https://github.com/fisothemes/pyesys/tree/master/examples
